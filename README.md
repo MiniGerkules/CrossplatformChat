@@ -6,7 +6,7 @@
 ```bash
 mkdir build
 cd build
-cmake ../
+cmake ../src
 cmake --build .
 ```
 После этого в директории `build/bin` будет лежать нужный исполняемый файл.
