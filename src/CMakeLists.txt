@@ -5,10 +5,17 @@ project(${NAME} LANGUAGES CXX)
 
 set(SOURCES
     main.cpp
-    Application.cpp
+    Client.cpp
+    Server.cpp
+    CMDArgsHelpers.cpp
+    NetworkingMember.cpp
 )
 set(HEADERS
-    Application.hpp
+    LaunchOption.hpp
+    Client.hpp
+    Server.hpp
+    CMDArgsHelpers.hpp
+    NetworkingMember.hpp
 )
 
 add_executable(${NAME} ${SOURCES} ${HEADERS})
