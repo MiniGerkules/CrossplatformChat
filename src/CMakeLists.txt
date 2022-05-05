@@ -5,20 +5,27 @@ project(${NAME} LANGUAGES CXX)
 
 set(SOURCES
     main.cpp
-    Client.cpp
-    Server.cpp
-    CMDArgsHelpers.cpp
-    NetworkingMember.cpp
+    Helpers.cpp
 )
 set(HEADERS
-    LaunchOption.hpp
+    LaunchOptions.hpp
     Client.hpp
     Server.hpp
-    CMDArgsHelpers.hpp
-    NetworkingMember.hpp
+    Helpers.hpp
+    Message.hpp
+    TSQueue.hpp
+    Connection.hpp
+    Runnable.hpp
+    PossibleIDs.hpp
 )
 
 add_executable(${NAME} ${SOURCES} ${HEADERS})
+
+if (WIN32)
+    target_compile_options(${NAME} PRIVATE /std:c++17 /W4)
+else()
+    target_compile_options(${NAME} PRIVATE -std=c++17 -Wall -Wextra -Wpedantic -Waddress)
+endif()
 
 # Add main lib to use
 target_include_directories(${NAME} PRIVATE ${CMAKE_SOURCE_DIR}/../asio/include)
@@ -41,3 +48,5 @@ target_include_directories(${NAME} PRIVATE ${CMAKE_SOURCE_DIR}/../mpl/include)
 target_include_directories(${NAME} PRIVATE ${CMAKE_SOURCE_DIR}/../preprocessor/include)
 target_include_directories(${NAME} PRIVATE ${CMAKE_SOURCE_DIR}/../bind/include)
 target_include_directories(${NAME} PRIVATE ${CMAKE_SOURCE_DIR}/../regex/include)
+
+install(FILES $<TARGET_FILE:${NAME}> DESTINATION ${CMAKE_BINARY_DIR}/bin)
