@@ -3,6 +3,7 @@
 #include <string>
 #include <exception>
 #include <boost/asio.hpp>
+#include <functional>
 
 #include "Message.hpp"
 #include "TSQueue.hpp"
@@ -17,9 +18,18 @@ public:
 protected:
 	boost::asio::io_context& ioContext; 
 	boost::asio::ip::tcp::socket socket;
+	boost::asio::deadline_timer timer;
+	std::function<void()> ifConnectionLost;
+
+	std::mutex waitMut;
+	std::condition_variable isReady;
+	std::atomic_bool canContinue;
+
 	Owner ownerType;
 	TSQueue<Message<T>> msgOut;
 	TSQueue<OwnedMessage<T>>& msgIn;
+
+	T ifError;
 	std::string name;
 	size_t id = 0;
 
@@ -27,9 +37,12 @@ private:
 	Message<T> tempMsg;
 
 public:
-	Connection(Owner owner, boost::asio::io_context& ioContext, boost::asio::ip::tcp::socket socket, 
-		TSQueue<OwnedMessage<T>>& msgIn) : ioContext{ ioContext }, msgIn{ msgIn }, socket{ std::move(socket) } {
+	Connection(Owner owner, boost::asio::io_context& ioContext, boost::asio::ip::tcp::socket socket,
+		TSQueue<OwnedMessage<T>>& msgIn, T ifError) : ifConnectionLost{ ifConnectionLost }, ioContext { ioContext },
+		msgIn{ msgIn }, socket{ std::move(socket) }, timer{ ioContext }, ifError{ ifError }
+	{
 		ownerType = owner;
+		canContinue.store(false);
 	}
 
 	~Connection() {
@@ -58,8 +71,6 @@ public:
 				this->id = id;
 				readHeader();
 			}
-		} else {
-			std::cout << "[CLIENT]: ERROR! Client try to connect to client! Connection ID = " << id << "\n";
 		}
 	}
 
@@ -67,12 +78,30 @@ public:
 		if (ownerType == Owner::client) {
 			boost::asio::async_connect(socket, endpoints,
 				[this](boost::system::error_code ec, boost::asio::ip::tcp::endpoint endpoint) {
-					if (!ec)
+					if (!ec) {
+						timer.cancel();
 						readHeader();
+					} else {
+						socket.close();
+					}
+
+					canContinue.store(true);
+					std::unique_lock uniqueLock{ waitMut };
+					isReady.notify_all();
 				}
 			);
-		} else {
-			std::cout << "[SERVER]: ERROR! Server try to connect to server! Connection ID = " << id << "\n";
+
+			timer.expires_from_now(boost::posix_time::milliseconds(2'000));
+			timer.async_wait([this](const boost::system::error_code& ec) {
+					if (!ec) {
+						socket.close();
+					}
+
+					canContinue.store(true);
+					std::unique_lock uniqueLock{ waitMut };
+					isReady.notify_all();
+				}
+			);
 		}
 	}
 
@@ -96,6 +125,11 @@ public:
 		);
 	}
 
+	void waitForReadiness() {
+		std::unique_lock uniqueLock{ waitMut };
+		isReady.wait(uniqueLock, [this]() { return canContinue.load(); });
+	}
+
 private:
 	void readHeader() {
 		boost::asio::async_read(socket, boost::asio::buffer(&tempMsg.header, sizeof(MessageHeader<T>)),
@@ -109,7 +143,7 @@ private:
 					}
 				} else {
 					std::cout << "[" << id << "]: ERROR! Can't read header!\n";
-					socket.close();
+					thereIsError();
 				}
 			}
 		);
@@ -122,7 +156,7 @@ private:
 					addToInQueue();
 				} else {
 					std::cout << "[" << id << "]: ERROR! Can't read body!\n";
-					socket.close();
+					thereIsError();
 				}
 			}
 		);
@@ -141,7 +175,7 @@ private:
 					}
 				} else {
 					std::cout << "[" << id << "]: ERROR! Can't write header!\n";
-					socket.close();
+					thereIsError();
 				}
 			}
 		);
@@ -157,18 +191,29 @@ private:
 				}
 				else {
 					std::cout << "[" << id << "]: ERROR! Can't write body!\n";
-					socket.close();
+					thereIsError();
 				}
 			}
 		);
 	}
 
 	void addToInQueue() {
+		pushInQueue();
+		readHeader();
+	}
+
+private:
+	void pushInQueue() {
 		if (ownerType == Owner::server)
 			msgIn.push({ this->shared_from_this(), tempMsg });
 		else
 			msgIn.push({ nullptr, tempMsg });
+	}
 
-		readHeader();
+	void thereIsError() {
+		socket.close();
+		tempMsg.header.id = ifError;
+		tempMsg.body.clear();
+		pushInQueue();
 	}
 };
