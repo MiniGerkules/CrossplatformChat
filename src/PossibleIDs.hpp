@@ -2,5 +2,5 @@
 
 enum class PossibleMessageIDs {
     sendName, sendMessageTo, sendMessageAll, whoOnline, notAvailable,
-    serverResponse
+    serverResponse, newClient, clientDisconnected, check
 };
