@@ -49,8 +49,6 @@ target_include_directories(${NAME} PRIVATE ${CMAKE_SOURCE_DIR}/../preprocessor/i
 target_include_directories(${NAME} PRIVATE ${CMAKE_SOURCE_DIR}/../bind/include)
 target_include_directories(${NAME} PRIVATE ${CMAKE_SOURCE_DIR}/../regex/include)
 
-# set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
-# set(CMAKE_INSTALL_RPATH "\$ORIGIN")
 set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
 
 add_custom_command(TARGET ${NAME} POST_BUILD COMMAND 
