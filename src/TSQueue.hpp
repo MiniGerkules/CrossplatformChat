@@ -8,6 +8,9 @@ protected:
     mutable std::mutex queueMut;
     std::queue<T> queue;
 
+    std::condition_variable waitMsg;
+    std::mutex waitMut;
+
 public:
     TSQueue() = default;
     //TSQueue(const TSQueue&) = delete;
@@ -28,6 +31,9 @@ public:
     void push(const T& newItem) {
         std::scoped_lock lock{ queueMut };
         queue.push(newItem);
+
+        std::unique_lock uniqueLock{ waitMut };
+        waitMsg.notify_one();
     }
 
     void pop() {
@@ -48,5 +54,10 @@ public:
     void clear() {
         std::scoped_lock lock{ queueMut };
         while (!queue.empty()) queue.pop();
+    }
+
+    void wait() {
+        std::unique_lock uniqueLock{ waitMut };
+        waitMsg.wait(uniqueLock, [this]() { return !empty(); });
     }
 };
