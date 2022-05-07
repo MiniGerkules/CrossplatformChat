@@ -91,10 +91,10 @@ public:
 	}
 
 	void messageAllClients(const Message<T>& msg, std::shared_ptr<Connection<T>> ignoredClient = nullptr) {
-		for (auto& client : connections) {
-			if (client && client->isConnected()) {
-				if (client != ignoredClient)
-					client->send(msg);
+		for (const auto& [name, connection] : users) {
+			if (connection && connection->isConnected()) {
+				if (connection != ignoredClient)
+					connection->send(msg);
 			}
 		}
 	}
