@@ -22,6 +22,11 @@ protected:
 	boost::asio::ip::tcp::acceptor acceptor;
 	std::thread ioThread;
 
+	std::thread broadcastThread;
+	std::atomic_bool canContinue = true;
+
+	size_t nextID = 0;
+
 public:
 	Server(uint16_t port = 60'000) 
 		: acceptor{ ioContext, boost::asio::ip::tcp::endpoint{ boost::asio::ip::tcp::v4(), port} } {
@@ -41,7 +46,8 @@ public:
 	bool start() {
 		try {
 			waitForClientConnection();
-			ioThread = std::thread{ [this]() { ioContext.run(); } };
+			ioThread = std::thread([this]() { ioContext.run(); });
+			broadcastThread = std::thread(checkBroadcastCalls, std::ref(canContinue));
 		} catch (const std::exception& error) {
 			std::cout << "[SERVER]: ERROR" << error.what() << "\n";
 			return false;
@@ -55,6 +61,10 @@ public:
 		ioContext.stop();
 		if (ioThread.joinable())
 			ioThread.join();
+
+		canContinue.store(false); 
+		if (broadcastThread.joinable())
+			broadcastThread.join();
 
 		std::cout << "[SERVER]: Stopped\n";
 	}
@@ -70,8 +80,7 @@ public:
 
 					onClientConnect(newConnection);
 					connections.push_back(newConnection);
-					connections.back()->connectToClient();
-					std::cout << "[" << connections.back()->getID() << "] has been connected!\n";
+					connections.back()->connectToClient(nextID++);
 				} else {
 					std::cout << "[SERVER]: New connection has error -- " << ec.message() << "\n";
 				}
@@ -114,6 +123,8 @@ public:
 
 protected:
 	void onClientConnect(std::shared_ptr<Connection<T>> client) {
+		std::cout << "[" << client->getID() << "] has been connected!\n";
+
 		Message<PossibleMessageIDs> msg;
 		msg.header.id = PossibleMessageIDs::serverResponse;
 		messageClient(client, msg);
@@ -212,6 +223,17 @@ protected:
 				client.reset();
 				users.erase(name);
 			}
+		}
+	}
+
+private:
+	static void checkBroadcastCalls(std::atomic_bool& canContinue) {
+		boost::asio::io_context ioContext;
+
+		while (canContinue) {
+			std::string ip = Helpers::getIPOfClient(ioContext);
+			if (ip != "")
+				Helpers::sendMessageToNewClient(ioContext, ip);
 		}
 	}
 };
