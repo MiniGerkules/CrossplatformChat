@@ -135,6 +135,7 @@ private:
 		boost::asio::async_read(socket, boost::asio::buffer(&tempMsg.header, sizeof(MessageHeader<T>)),
 			[this](boost::system::error_code ec, size_t length) {
 				if (!ec) {
+					tempMsg.body.clear();
 					if (tempMsg.header.size > 0) {
 						tempMsg.body.resize(tempMsg.header.size);
 						readBody();
