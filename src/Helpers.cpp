@@ -22,9 +22,7 @@ void Helpers::outputHelp(std::ostream& stream) {
 
 void Helpers::printOptions(std::vector<std::string> options) {
     for (size_t i = 0; i < options.size(); ++i)
-        std::cout << i + 1 << ") " << options[i];
-
-    std::cout << '\n';
+        std::cout << i + 1 << ") " << options[i] << "\n";
 }
 
 size_t Helpers::chooseOption(size_t min, size_t max) {
