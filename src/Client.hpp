@@ -19,6 +19,13 @@ protected:
 	std::unique_ptr<Connection<PossibleMessageIDs>> connection;
 	std::thread ioThread;
 	std::thread inputMsgThread;
+
+	std::mutex responseMut;
+	std::condition_variable responseFromServer;
+	std::atomic_bool isAvailable = false;
+	std::atomic_bool canContinue = true;
+
+	Message<PossibleMessageIDs> whoOnline;
 	std::string interlocutor;
 
 private:
@@ -33,54 +40,60 @@ public:
 
 public:
 	void run() override {
-		if (!connect("127.0.0.1", 60'000)) {
-			std::cout << "Can't connect to server!";
+		if (!connectToServer()) {
+			std::cout << "Unable to connect to the server! Try again later.\n";
 			return;
 		}
 
-		std::atomic_bool isAvailable = false;
-		Message<PossibleMessageIDs> whoOnline;
-		inputMsgThread = std::thread(processInputMsgs, std::ref(msgIn), std::ref(whoOnline), std::ref(isAvailable));
-
+		inputMsgThread = std::thread(processInputMsgs, this);
+		{
+			std::unique_lock uniqueLock{ responseMut };
+			responseFromServer.wait(uniqueLock);
+		}
 		initClient();
 		printHelp();
-		chooseInterlocutor(isAvailable, whoOnline);
+		chooseInterlocutor();
 
-		while (true) {
+		while (canContinue.load()) {
 			if (!isConnected()) {
 				std::cout << "Server down!!! The program close.\n";
 				break;
 			}
 
-			if (isAvailable.load() == true) {
-				std::string current;
+			if (interlocutor == "")
+				std::cout << "Interlocutor not selected or not available. Enter '\\x' to get a list of all available users.\n";
+			std::string current;
+			std::getline(std::cin, current);
+			if (interlocutor != "")
+				std::cout << "Message sended to [" << interlocutor << "]\n\n";
 
-				std::cout << "\nMessage to [" << interlocutor << "]:\n";
-				std::getline(std::cin, current);
+			if (!canContinue.load()) {
+				std::cout << "The program exits.\n";
+				return;
+			}
 
-				if (current != "\\x") {
-					Message<PossibleMessageIDs> msg;
-					msg.header.id = PossibleMessageIDs::sendMessageTo;
-					msg << current << interlocutor;
-					connection->send(msg);
-				} else {
-					isAvailable.store(false);
-					chooseInterlocutor(isAvailable, whoOnline);
-				}
+			if (current != "\\x" && isAvailable.load()) {
+				Message<PossibleMessageIDs> msg;
+				msg.header.id = PossibleMessageIDs::sendMessageTo;
+				msg << current << interlocutor;
+				connection->send(msg);
 			} else {
-				std::cout << "User " << interlocutor << " is no longer available. Choose another interlocutor.";
-				chooseInterlocutor(isAvailable, whoOnline);
+				std::string toOutput = current == "\\x" ? "" : "User " + interlocutor + " not available now. ";
+				std::cout << "\n" << toOutput << "Now you will be given a list of potential interlocutors.\n";
+				isAvailable.store(false);
+				chooseInterlocutor();
 			}
 		}
 	}
 
-	bool connect(const std::string& host, const uint16_t port) {
+	void connect(const std::string& host, const uint16_t port) {
 		try {
 			boost::asio::ip::tcp::resolver resolver{ ioContext };
 			boost::asio::ip::tcp::resolver::results_type endpoints = resolver.resolve(host, std::to_string(port));
 
 			connection = std::make_unique<Connection<PossibleMessageIDs>>(
-				Connection<PossibleMessageIDs>::Owner::client, ioContext, boost::asio::ip::tcp::socket{ ioContext }, msgIn
+				Connection<PossibleMessageIDs>::Owner::client, ioContext, boost::asio::ip::tcp::socket{ ioContext }, msgIn, 
+				PossibleMessageIDs::check
 			);
 			connection->connectToServer(endpoints);
 
@@ -88,7 +101,6 @@ public:
 		}
 		catch (std::exception& error) {
 			std::cout << "[CLIENT]: ERROR! " << error.what() << "\n";
-			return false;
 		}
 	}
 
@@ -110,34 +122,60 @@ public:
 	}
 
 protected:
-	static void processInputMsgs(TSQueue<OwnedMessage<PossibleMessageIDs>>& msgIn, Message<PossibleMessageIDs>& whoOnline,
-		std::atomic_bool& isAvailable) {
+	static void processInputMsgs(Client* client) {
 		while (true) {
-			if (!msgIn.empty()) {
-				Message<PossibleMessageIDs> msg = msgIn.front().msg;
-				msgIn.pop();
+			client->msgIn.wait();
+			Message<PossibleMessageIDs> msg = client->msgIn.front().msg;
+			client->msgIn.pop();
 
-				switch (msg.header.id) {
-				case PossibleMessageIDs::sendMessageTo: {
-					std::string name;
-					msg >> name;
-					std::cout << "From [" << name << "]: ";
+			switch (msg.header.id) {
+			case PossibleMessageIDs::newClient: {
+				std::string name;
+				msg >> name;
+				std::cout << "\n" << name << " is online!\n";
+				break;
+			}
+			case PossibleMessageIDs::sendMessageTo: {
+				std::string name;
+				msg >> name;
+				std::cout << "\nFrom [" << name << "]: ";
 
-					printMessageData(msg);
-					break;
+				printMessageData(msg);
+				break;
+			}
+			case PossibleMessageIDs::sendMessageAll:
+				std::cout << "[To all]: ";
+				printMessageData(msg);
+				break;
+			case PossibleMessageIDs::whoOnline:
+				client->whoOnline = msg;
+				client->isAvailable.store(true);
+				break;
+			case PossibleMessageIDs::notAvailable:
+				client->isAvailable = false;
+				break;
+			case PossibleMessageIDs::serverResponse: {
+				std::unique_lock uniqueLock{ client->responseMut };
+				client->responseFromServer.notify_all();
+				break;
+			}
+			case PossibleMessageIDs::clientDisconnected: {
+				std::string name;
+				msg >> name;
+
+				std::cout << "User " << name << " disconnected.\n";
+				if (name == client->interlocutor) {
+					client->isAvailable.store(false);
+					client->interlocutor = "";
 				}
-				case PossibleMessageIDs::sendMessageAll:
-					std::cout << "[To all]: ";
-					printMessageData(msg);
-					break;
-				case PossibleMessageIDs::whoOnline:
-					whoOnline = msg;
-					isAvailable.store(true);
-					break;
-				case PossibleMessageIDs::notAvailable:
-					isAvailable = false;
-					break;
-				}
+				break;
+			}
+			case PossibleMessageIDs::check:
+				std::cout << "Server is not available!\n\n";
+				client->canContinue.store(false);
+				break;
+			default:
+				break;
 			}
 		}
 	}
@@ -151,9 +189,33 @@ protected:
 		}
 
 		std::for_each(data.crbegin(), data.crend(), [](std::string elem) { std::cout << elem; });
+		std::cout << "\n\n";
 	}
 
 private:
+	std::string getServerIP() {
+		boost::asio::io_context ioContext;
+
+		Helpers::sendMessageToNewClient(ioContext);
+		std::string ip = Helpers::getIPOfClient(ioContext);
+		
+		return ip;
+	}
+
+	bool connectToServer() {
+		std::cout << "Try to connect to server...\n";
+
+		std::string ip = getServerIP();
+		std::cout << ip << std::endl;
+		if (ip == "")
+			return false;
+
+		connect(ip, 60'000);
+		connection->waitForReadiness();
+
+		return connection->isConnected();
+	}
+
 	std::string getName() {
 		std::string name;
 
@@ -161,22 +223,21 @@ private:
 		do {
 			std::cout << "Input your name -- ";
 			std::getline(std::cin, name);
-			if (name.length() != 0) {
-				std::cout << "Hello " << name << "!\n";
+			if (name.length() != 0)
 				break;
-			} else {
+			else
 				std::cout << "The name is empty! Try again.\n";
-			}
 		} while (true);
 		
 		return name;
 	}
 
 	void printHelp() {
-		std::cout << "If you want to leave the chat enter '\\x'.\n";
+		std::cout << "If you want to select another interlocutor, enter '\\x'.\n\n";
 	}
 
 	void initClient() {
+		std::cout << "Connecting to the server successfully!\n\n";
 		std::string name = getName();
 		{
 			Message<PossibleMessageIDs> msg;
@@ -186,40 +247,41 @@ private:
 		}
 	}
 
-	bool chooseInterlocutor(const std::atomic_bool& isAvailable, Message<PossibleMessageIDs>& whoOnline) {
+	bool chooseInterlocutor() {
 		Message<PossibleMessageIDs> msg;
 		msg.header.id = PossibleMessageIDs::whoOnline;
 		connection->send(msg);
 
-		while (isAvailable.load() != true) {
+		while (!isAvailable.load()) {
 			using namespace std::chrono_literals;
 			std::this_thread::sleep_for(100ms);
 		}
 
-		return getInterlocutor(whoOnline);
+		return getInterlocutor();
 	}
 
-	bool getInterlocutor(Message<PossibleMessageIDs> whoOnline) {
+	bool getInterlocutor() {
 		if (whoOnline.body.size() == 0) {
-			std::cout << "Nobody is online. Try to enter '\\x' or close the porgram.\n";
+			std::cout << "Nobody is online.\n\n";
 
 			return false;
 		} else {
 			std::cout << "Select the user you want to chat with:\n";
-			std::vector<std::string> names = getPossibleInterlocutors(whoOnline);
+			std::vector<std::string> names = getPossibleInterlocutors();
 			Helpers::printOptions(names);
 			interlocutor = names[Helpers::chooseOption(1, names.size()) - 1];
+			std::cout << "\nMessage will be sended to [" << interlocutor << "]\n\n";
 
 			return true;
 		}
 	}
 
-	std::vector<std::string> getPossibleInterlocutors(Message<PossibleMessageIDs>& msg) {
+	std::vector<std::string> getPossibleInterlocutors() {
 		std::vector<std::string> names;
 
 		std::string current;
-		while (msg.body.size() != 0) {
-			msg >> current;
+		while (whoOnline.body.size() != 0) {
+			whoOnline >> current;
 			names.push_back(current);
 		}
 
