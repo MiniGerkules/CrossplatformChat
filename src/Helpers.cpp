@@ -1,6 +1,9 @@
 #include <cstring>
 #include <iostream>
+
 #include "Helpers.hpp"
+#include "Message.hpp"
+#include "PossibleIDs.hpp"
 
 LaunchOptions Helpers::processCMDArgs(const int argc, const char* argv[]) {
     if (argc == 2) {
@@ -43,4 +46,72 @@ size_t Helpers::chooseOption(size_t min, size_t max) {
 
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     return choose;
+}
+
+std::string Helpers::getIPOfClient(boost::asio::io_context& ioContext) {
+    boost::system::error_code ec;
+    std::string ip = "";
+
+    boost::asio::ip::udp::socket socket{ ioContext };
+    socket.open(boost::asio::ip::udp::v4(), ec);
+
+    if (!ec) {
+        socket.set_option(boost::asio::ip::udp::socket::reuse_address{ true });
+        socket.set_option(boost::asio::socket_base::broadcast{ true });
+
+        boost::asio::ip::udp::endpoint endpoint{ boost::asio::ip::address_v4::any(), 60'000 };
+        socket.bind(endpoint);
+
+        if (!wait(socket))
+            return ip;
+        
+        MessageHeader<PossibleMessageIDs> msg;
+        socket.receive_from(boost::asio::buffer(&msg, sizeof(msg)), endpoint);
+        ip = endpoint.address().to_string();
+
+        socket.close(ec);
+    }
+
+    return ip;
+}
+
+void Helpers::sendMessageToNewClient(boost::asio::io_context& ioContext, std::string ip) {
+    boost::system::error_code ec;
+    boost::asio::ip::udp::socket socket{ ioContext };
+    socket.open(boost::asio::ip::udp::v4(), ec);
+
+    if (!ec) {
+        socket.set_option(boost::asio::ip::udp::socket::reuse_address{ true });
+        boost::asio::ip::udp::endpoint endpoint;
+
+        if (ip == "") {
+            endpoint = boost::asio::ip::udp::endpoint{ boost::asio::ip::address_v4::broadcast(), 60'000 };
+            socket.set_option(boost::asio::socket_base::broadcast{ true });
+        } else {
+            endpoint = boost::asio::ip::udp::endpoint{ boost::asio::ip::make_address(ip), 60'000 };
+        }
+
+        MessageHeader<PossibleMessageIDs> msg;
+        msg.id = PossibleMessageIDs::findServer;
+        socket.send_to(boost::asio::buffer(&msg, sizeof(msg)), endpoint);
+
+        socket.close(ec);
+    }
+}
+
+bool Helpers::wait(boost::asio::ip::udp::socket& socket) {
+    using namespace std::chrono_literals;
+
+    size_t i = 0;
+    while (true) {
+        if (socket.available() > 0)
+            break;
+        else if (i >= 20)
+            return false;
+
+        ++i;
+        std::this_thread::sleep_for(100ms);
+    }
+
+    return true;
 }
