@@ -80,7 +80,7 @@ struct Message {
     }
 
     friend std::ostream& operator<<(std::ostream& stream, const Message& msg) {
-        stream << "ID: " << header.id << ". Size: " << msg.header.size;
+        stream << "ID: " << msg.header.id << ". Size: " << msg.header.size;
         return stream;
     }
 };
