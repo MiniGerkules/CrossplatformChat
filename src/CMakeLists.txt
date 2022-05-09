@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-set(NAME CrosspatformChat)
+set(NAME CrossplatformChat)
 
 project(${NAME} LANGUAGES CXX)
 
@@ -49,8 +49,10 @@ target_include_directories(${NAME} PRIVATE ${CMAKE_SOURCE_DIR}/../preprocessor/i
 target_include_directories(${NAME} PRIVATE ${CMAKE_SOURCE_DIR}/../bind/include)
 target_include_directories(${NAME} PRIVATE ${CMAKE_SOURCE_DIR}/../regex/include)
 
-set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
+find_package(Threads REQUIRED)
+target_link_libraries(${NAME} Threads::Threads)
 
+set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
 add_custom_command(TARGET ${NAME} POST_BUILD COMMAND 
     ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target install
 )
