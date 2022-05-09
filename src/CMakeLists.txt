@@ -24,7 +24,7 @@ add_executable(${NAME} ${SOURCES} ${HEADERS})
 if (WIN32)
     target_compile_options(${NAME} PRIVATE /std:c++17 /W4)
 else()
-    target_compile_options(${NAME} PRIVATE -std=c++17 -Wall -Wextra -Wpedantic -Waddress)
+    target_compile_options(${NAME} PRIVATE -std=c++17 -Wall -Wextra -Waddress -pedantic)
 endif()
 
 # Add main lib to use
@@ -57,4 +57,4 @@ add_custom_command(TARGET ${NAME} POST_BUILD COMMAND
     ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target install
 )
 
-install(FILES $<TARGET_FILE:${NAME}> DESTINATION ${CMAKE_BINARY_DIR}/bin)
+install(TARGETS ${NAME} DESTINATION ${CMAKE_BINARY_DIR}/bin)
