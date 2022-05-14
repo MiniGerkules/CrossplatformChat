@@ -23,6 +23,7 @@ protected:
 
 	std::mutex responseMut;
 	std::condition_variable responseFromServer;
+	std::atomic_bool responseWas = false;
 	std::atomic_bool isAvailable = false;
 
 	Message<PossibleMessageIDs> whoOnline;
@@ -45,9 +46,10 @@ public:
 			return;
 		}
 
-		initClient();
-		printHelp();
-		chooseInterlocutor();
+		if (!initClient() || !chooseInterlocutor()) {
+			std::cout << "The connection with the server is lost! The program will be closed.\n";
+			return;
+		}
 
 		while (isConnected()) {
 			if (interlocutor == "")
@@ -102,6 +104,8 @@ public:
 			ioThread.join();
 		if (inputMsgThread.joinable())
 			inputMsgThread.join();
+		if (heartbeatThread.joinable())
+			heartbeatThread.join();
 
 		connection.release();
 	}
@@ -113,7 +117,10 @@ public:
 protected:
 	static void processInputMsgs(Client* client) {
 		while (client->isConnected()) {
-			client->msgIn.wait();
+			waitDataOrDisconnect(client);
+			if (!client->isConnected())
+				return;
+
 			Message<PossibleMessageIDs> msg = client->msgIn.front().msg;
 			client->msgIn.pop();
 
@@ -144,7 +151,8 @@ protected:
 				client->isAvailable = false;
 				break;
 			case PossibleMessageIDs::serverResponse: {
-				std::unique_lock uniqueLock{ client->responseMut };
+				client->responseWas.store(true);
+				std::unique_lock ul{ client->responseMut };
 				client->responseFromServer.notify_all();
 				break;
 			}
@@ -178,6 +186,13 @@ protected:
 	}
 
 private:
+	static void waitDataOrDisconnect(Client* client) {
+		using namespace std::chrono_literals;
+
+		while (client->isConnected() && client->msgIn.empty())
+			std::this_thread::sleep_for(100ms);
+	}
+
 	std::string getServerIP() {
 		boost::asio::io_context ioContext;
 
@@ -221,9 +236,9 @@ private:
 		std::cout << "If you want to select another interlocutor, enter '\\x'.\n\n";
 	}
 
-	void initClient() {
+	bool initClient() {
 		inputMsgThread = std::thread(processInputMsgs, this);
-		{
+		if (!responseWas.load()) {
 			std::unique_lock ul{ responseMut };
 			responseFromServer.wait(ul);
 		}
@@ -231,12 +246,17 @@ private:
 
 		std::cout << "Connecting to the server successfully!\n\n";
 		std::string name = getName();
-		{
+		if (isConnected()) {
 			Message<PossibleMessageIDs> msg;
 			msg.header.id = PossibleMessageIDs::sendName;
 			msg << name;
 			connection->send(msg);
+
+			printHelp();
+			return true;
 		}
+
+		return false;
 	}
 
 	static void sendHeartbeat(Client* client) {
@@ -252,6 +272,9 @@ private:
 	}
 
 	bool chooseInterlocutor() {
+		if (!isConnected())
+			return false;
+
 		Message<PossibleMessageIDs> msg;
 		msg.header.id = PossibleMessageIDs::whoOnline;
 		connection->send(msg);
