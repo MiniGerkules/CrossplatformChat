@@ -183,8 +183,10 @@ protected:
 			break;
 		}
 		case PossibleMessageIDs::sendHeartbeat: {
-			std::scoped_lock sq{ mapWithUsersMut };
-			users[client->getName()].second = std::chrono::steady_clock::now();
+			if (client->getName() != "") {
+				std::scoped_lock sq{ mapWithUsersMut };
+				users[client->getName()].second = std::chrono::steady_clock::now();
+			}
 			break;
 		}
 		case PossibleMessageIDs::whoOnline: {
@@ -229,32 +231,37 @@ private:
 	static void checkHeartbeat(Server<T>* server) {
 		using namespace std::chrono;
 		using namespace std::chrono_literals;
-		std::vector<std::string> names;
+		using User = std::pair<std::string, std::shared_ptr<Connection<T>>>;
 
 		while (server->canContinue.load()) {
 			steady_clock::time_point now = steady_clock::now();
+			std::vector<User> toDisconnect;
 
 			server->mapWithUsersMut.lock();
 			for (const auto& [name, pair] : server->users) {
 				if (pair.first) {
-					if (!pair.first->isConnected() || duration_cast<seconds>(pair.second - now) > 2s) {
-						names.push_back(name);
-						server->onClientDisconnect(pair.first);
-					}
+					if (!pair.first->isConnected() || duration_cast<seconds>(now - pair.second) > 2s)
+						toDisconnect.push_back(std::make_pair(name, pair.first));
 				} else {
 					server->users.erase(name);
 				}
 			}
+			server->mapWithUsersMut.unlock();
 
 			//clearDisconnectedClients(names);
-			if (!names.empty()) {
-				for (std::string name : names) {
-					auto client = server->users[name];
-					client.first.reset();
-					server->users.erase(name);
+			if (!toDisconnect.empty()) {
+				for (User user : toDisconnect) {
+					user.second->disconnect();
+					server->onClientDisconnect(user.second);
 				}
+
+				server->mapWithUsersMut.lock();
+				for (User user : toDisconnect) {
+					server->users[user.first].first.reset();
+					server->users.erase(user.first);
+				}
+				server->mapWithUsersMut.unlock();
 			}
-			server->mapWithUsersMut.unlock();
 			
 			std::this_thread::sleep_for(100ms);
 		}
