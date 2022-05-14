@@ -19,11 +19,11 @@ protected:
 	std::unique_ptr<Connection<PossibleMessageIDs>> connection;
 	std::thread ioThread;
 	std::thread inputMsgThread;
+	std::thread heartbeatThread;
 
 	std::mutex responseMut;
 	std::condition_variable responseFromServer;
 	std::atomic_bool isAvailable = false;
-	std::atomic_bool canContinue = true;
 
 	Message<PossibleMessageIDs> whoOnline;
 	std::string interlocutor;
@@ -45,21 +45,11 @@ public:
 			return;
 		}
 
-		inputMsgThread = std::thread(processInputMsgs, this);
-		{
-			std::unique_lock uniqueLock{ responseMut };
-			responseFromServer.wait(uniqueLock);
-		}
 		initClient();
 		printHelp();
 		chooseInterlocutor();
 
-		while (canContinue.load()) {
-			if (!isConnected()) {
-				std::cout << "Server down!!! The program close.\n";
-				break;
-			}
-
+		while (isConnected()) {
 			if (interlocutor == "")
 				std::cout << "Interlocutor not selected or not available. Enter '\\x' to get a list of all available users.\n";
 			std::string current;
@@ -67,10 +57,8 @@ public:
 			if (interlocutor != "")
 				std::cout << "Message sended to [" << interlocutor << "]\n\n";
 
-			if (!canContinue.load()) {
-				std::cout << "The program exits.\n";
+			if (!isConnected())
 				return;
-			}
 
 			if (current != "\\x" && isAvailable.load()) {
 				Message<PossibleMessageIDs> msg;
@@ -84,6 +72,8 @@ public:
 				chooseInterlocutor();
 			}
 		}
+
+		std::cout << "The connection with the server is lost! The program will be closed.\n";
 	}
 
 	void connect(const std::string& host, const uint16_t port) {
@@ -92,14 +82,13 @@ public:
 			boost::asio::ip::tcp::resolver::results_type endpoints = resolver.resolve(host, std::to_string(port));
 
 			connection = std::make_unique<Connection<PossibleMessageIDs>>(
-				Connection<PossibleMessageIDs>::Owner::client, ioContext, boost::asio::ip::tcp::socket{ ioContext }, msgIn, 
-				PossibleMessageIDs::check
+				Connection<PossibleMessageIDs>::Owner::client, ioContext, 
+				boost::asio::ip::tcp::socket{ ioContext }, msgIn
 			);
 			connection->connectToServer(endpoints);
 
 			ioThread = std::thread([this]() { ioContext.run(); });
-		}
-		catch (std::exception& error) {
+		} catch (std::exception& error) {
 			std::cout << "[CLIENT]: ERROR! " << error.what() << "\n";
 		}
 	}
@@ -123,7 +112,7 @@ public:
 
 protected:
 	static void processInputMsgs(Client* client) {
-		while (true) {
+		while (client->isConnected()) {
 			client->msgIn.wait();
 			Message<PossibleMessageIDs> msg = client->msgIn.front().msg;
 			client->msgIn.pop();
@@ -170,10 +159,6 @@ protected:
 				}
 				break;
 			}
-			case PossibleMessageIDs::check:
-				std::cout << "Server is not available!\n\n";
-				client->canContinue.store(false);
-				break;
 			default:
 				break;
 			}
@@ -237,6 +222,13 @@ private:
 	}
 
 	void initClient() {
+		inputMsgThread = std::thread(processInputMsgs, this);
+		{
+			std::unique_lock ul{ responseMut };
+			responseFromServer.wait(ul);
+		}
+		heartbeatThread = std::thread(sendHeartbeat, this);
+
 		std::cout << "Connecting to the server successfully!\n\n";
 		std::string name = getName();
 		{
@@ -244,6 +236,18 @@ private:
 			msg.header.id = PossibleMessageIDs::sendName;
 			msg << name;
 			connection->send(msg);
+		}
+	}
+
+	static void sendHeartbeat(Client* client) {
+		Message<PossibleMessageIDs> msg;
+		msg.header.id = PossibleMessageIDs::sendHeartbeat;
+		
+		while (client->isConnected()) {
+			using namespace std::chrono_literals;
+
+			client->connection->send(msg);
+			std::this_thread::sleep_for(1s);
 		}
 	}
 
