@@ -1,1 +1,1 @@
-build/bin/CrossplatformChat.exe --server
+build/bin/CrossplatformChat --server
