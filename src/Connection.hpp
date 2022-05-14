@@ -29,7 +29,6 @@ protected:
 	TSQueue<Message<T>> msgOut;
 	TSQueue<OwnedMessage<T>>& msgIn;
 
-	T ifError;
 	std::string name;
 	size_t id = 0;
 
@@ -38,8 +37,8 @@ private:
 
 public:
 	Connection(Owner owner, boost::asio::io_context& ioContext, boost::asio::ip::tcp::socket socket,
-		TSQueue<OwnedMessage<T>>& msgIn, T ifError) : ifConnectionLost{ ifConnectionLost }, ioContext { ioContext },
-		msgIn{ msgIn }, socket{ std::move(socket) }, timer{ ioContext }, ifError{ ifError }
+		TSQueue<OwnedMessage<T>>& msgIn) : ifConnectionLost{ ifConnectionLost }, ioContext { ioContext },
+		msgIn{ msgIn }, socket{ std::move(socket) }, timer{ ioContext }
 	{
 		ownerType = owner;
 		canContinue.store(false);
@@ -144,7 +143,7 @@ private:
 					}
 				} else {
 					std::cout << "[" << id << "]: ERROR! Can't read header!\n";
-					thereIsError();
+					socket.close();
 				}
 			}
 		);
@@ -157,7 +156,7 @@ private:
 					addToInQueue();
 				} else {
 					std::cout << "[" << id << "]: ERROR! Can't read body!\n";
-					thereIsError();
+					socket.close();
 				}
 			}
 		);
@@ -176,7 +175,7 @@ private:
 					}
 				} else {
 					std::cout << "[" << id << "]: ERROR! Can't write header!\n";
-					thereIsError();
+					socket.close();
 				}
 			}
 		);
@@ -192,7 +191,7 @@ private:
 				}
 				else {
 					std::cout << "[" << id << "]: ERROR! Can't write body!\n";
-					thereIsError();
+					socket.close();
 				}
 			}
 		);
@@ -209,12 +208,5 @@ private:
 			msgIn.push({ this->shared_from_this(), tempMsg });
 		else
 			msgIn.push({ nullptr, tempMsg });
-	}
-
-	void thereIsError() {
-		socket.close();
-		tempMsg.header.id = ifError;
-		tempMsg.body.clear();
-		pushInQueue();
 	}
 };
