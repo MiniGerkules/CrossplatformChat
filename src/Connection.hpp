@@ -142,7 +142,6 @@ private:
 						addToInQueue();
 					}
 				} else {
-					std::cout << "[" << id << "]: ERROR! Can't read header!\n";
 					socket.close();
 				}
 			}
@@ -155,7 +154,6 @@ private:
 				if (!ec) {
 					addToInQueue();
 				} else {
-					std::cout << "[" << id << "]: ERROR! Can't read body!\n";
 					socket.close();
 				}
 			}
@@ -174,7 +172,6 @@ private:
 							writeHeader();
 					}
 				} else {
-					std::cout << "[" << id << "]: ERROR! Can't write header!\n";
 					socket.close();
 				}
 			}
@@ -190,7 +187,6 @@ private:
 						writeHeader();
 				}
 				else {
-					std::cout << "[" << id << "]: ERROR! Can't write body!\n";
 					socket.close();
 				}
 			}
