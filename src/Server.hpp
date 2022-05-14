@@ -16,13 +16,15 @@ class Server : public Runnable {
 protected:
 	TSQueue<OwnedMessage<T>> msgIn;
 	std::deque<std::shared_ptr<Connection<T>>> connections;
-	std::map<std::string, std::shared_ptr<Connection<T>>> users;
+	std::map<std::string, std::pair<std::shared_ptr<Connection<T>>, std::chrono::steady_clock::time_point>> users;
+	std::mutex mapWithUsersMut;
 
 	boost::asio::io_context ioContext;
 	boost::asio::ip::tcp::acceptor acceptor;
 	std::thread ioThread;
 
 	std::thread broadcastThread;
+	std::thread heartbeatCheckerThread;
 	std::atomic_bool canContinue = true;
 
 	size_t nextID = 0;
@@ -48,8 +50,10 @@ public:
 			waitForClientConnection();
 			ioThread = std::thread([this]() { ioContext.run(); });
 			broadcastThread = std::thread(checkBroadcastCalls, std::ref(canContinue));
+			heartbeatCheckerThread = std::thread(checkHeartbeat, this);
 		} catch (const std::exception& error) {
 			std::cout << "[SERVER]: ERROR" << error.what() << "\n";
+			canContinue.store(false);
 			return false;
 		}
 
@@ -76,7 +80,7 @@ public:
 					std::cout << "[SERVER]: New connection -- " << socket.remote_endpoint() << "\n";
 
 					std::shared_ptr<Connection<T>> newConnection = std::make_shared<Connection<T>>(Connection<T>::Owner::server,
-						ioContext, std::move(socket), msgIn, PossibleMessageIDs::check);
+						ioContext, std::move(socket), msgIn);
 
 					onClientConnect(newConnection);
 					connections.push_back(newConnection);
@@ -100,10 +104,11 @@ public:
 	}
 
 	void messageAllClients(const Message<T>& msg, std::shared_ptr<Connection<T>> ignoredClient = nullptr) {
-		for (const auto& [name, connection] : users) {
-			if (connection && connection->isConnected()) {
-				if (connection != ignoredClient)
-					connection->send(msg);
+		std::scoped_lock sq{ mapWithUsersMut };
+		for (const auto& [name, pair] : users) {
+			if (pair.first && pair.first->isConnected()) {
+				if (pair.first != ignoredClient)
+					pair.first->send(msg);
 			}
 		}
 	}
@@ -149,7 +154,9 @@ protected:
 
 			msg >> name;
 			client->setName(name);
-			users[name] = client;
+			mapWithUsersMut.lock();
+			users[name] = std::make_pair(client, std::chrono::steady_clock::now());
+			mapWithUsersMut.unlock();
 			connections.erase(std::remove(connections.begin(), connections.end(), client), connections.end());
 
 			Message<PossibleMessageIDs> newClient;
@@ -160,10 +167,11 @@ protected:
 		}
 		case PossibleMessageIDs::sendMessageTo: {
 			std::string nameTo;
-			
+
 			msg >> nameTo;
 			msg << client->getName();
-			if (users.find(nameTo) == users.end() || !messageClient(users[nameTo], msg)) {
+			std::scoped_lock sq{ mapWithUsersMut };
+			if (users.find(nameTo) == users.end() || !messageClient(users[nameTo].first, msg)) {
 				Message<PossibleMessageIDs> msg;
 				msg.header.id = PossibleMessageIDs::notAvailable;
 				messageClient(client, msg);
@@ -174,14 +182,21 @@ protected:
 			messageAllClients(msg, client);
 			break;
 		}
+		case PossibleMessageIDs::sendHeartbeat: {
+			std::scoped_lock sq{ mapWithUsersMut };
+			users[client->getName()].second = std::chrono::steady_clock::now();
+			break;
+		}
 		case PossibleMessageIDs::whoOnline: {
 			std::cout << client->getName() << " requests who online\n";
 
 			std::vector<std::string> online;
-			for (const auto& [name, connection] : users) {
-				if (connection->isConnected() && connection->getName() != client->getName())
+			mapWithUsersMut.lock();
+			for (const auto& [name, pair] : users) {
+				if (pair.first->isConnected() && pair.first->getName() != client->getName())
 					online.push_back(name);
 			}
+			mapWithUsersMut.unlock();
 
 			Message<PossibleMessageIDs> response;
 			response.header.id = PossibleMessageIDs::whoOnline;
@@ -197,32 +212,6 @@ protected:
 			messageClient(client, response);
 			break;
 		}
-		case PossibleMessageIDs::check:
-			checkConnections();
-			break;
-		}
-	}
-
-	void checkConnections() {
-		std::vector<std::string> names;
-
-		for (const auto& [name, connection] : users) {
-			if (connection) {
-				if (!connection->isConnected()) {
-					names.push_back(connection->getName());
-					onClientDisconnect(connection);
-				}
-			} else {
-				users.erase(name);
-			}
-		}
-
-		if (!names.empty()) {
-			for (std::string name : names) {
-				auto client = users[name];
-				client.reset();
-				users.erase(name);
-			}
 		}
 	}
 
@@ -234,6 +223,40 @@ private:
 			std::string ip = Helpers::getIPOfClient(ioContext);
 			if (ip != "")
 				Helpers::sendMessageToNewClient(ioContext, ip);
+		}
+	}
+
+	static void checkHeartbeat(Server<T>* server) {
+		using namespace std::chrono;
+		using namespace std::chrono_literals;
+		std::vector<std::string> names;
+
+		while (server->canContinue.load()) {
+			steady_clock::time_point now = steady_clock::now();
+
+			server->mapWithUsersMut.lock();
+			for (const auto& [name, pair] : server->users) {
+				if (pair.first) {
+					if (!pair.first->isConnected() || duration_cast<seconds>(pair.second - now) > 2s) {
+						names.push_back(name);
+						server->onClientDisconnect(pair.first);
+					}
+				} else {
+					server->users.erase(name);
+				}
+			}
+
+			//clearDisconnectedClients(names);
+			if (!names.empty()) {
+				for (std::string name : names) {
+					auto client = server->users[name];
+					client.first.reset();
+					server->users.erase(name);
+				}
+			}
+			server->mapWithUsersMut.unlock();
+			
+			std::this_thread::sleep_for(100ms);
 		}
 	}
 };
