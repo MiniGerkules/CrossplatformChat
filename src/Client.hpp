@@ -58,7 +58,7 @@ public:
 				std::cout << "Interlocutor not selected or not available. Enter '\\x' to get a list of all available users.\n";
 			std::string current;
 			std::getline(std::cin, current);
-			if (interlocutor != "")
+			if (interlocutor != "" && isConnected())
 				std::cout << "Message sended to [" << interlocutor << "]\n\n";
 
 			if (!isConnected()) {
