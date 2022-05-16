@@ -26,6 +26,8 @@ protected:
 	std::atomic_bool responseWas = false;
 	std::atomic_bool isAvailable = false;
 
+	std::chrono::steady_clock::time_point lastServHeartbeat;
+
 	Message<PossibleMessageIDs> whoOnline;
 	std::string interlocutor;
 
@@ -111,7 +113,13 @@ public:
 	}
 
 	bool isConnected() {
-		return connection ? connection->isConnected() : false;
+		using namespace std::chrono;
+		using namespace std::chrono_literals;
+
+		if (connection && duration_cast<seconds>(steady_clock::now() - lastServHeartbeat) < 2s)
+			return connection->isConnected();
+		else
+			return false;
 	}
 
 protected:
@@ -142,6 +150,9 @@ protected:
 			case PossibleMessageIDs::sendMessageAll:
 				std::cout << "[To all]: ";
 				printMessageData(msg);
+				break;
+			case PossibleMessageIDs::sendHeartbeat:
+				client->lastServHeartbeat = std::chrono::steady_clock::now();
 				break;
 			case PossibleMessageIDs::whoOnline:
 				client->whoOnline = msg;
@@ -237,6 +248,7 @@ private:
 	}
 
 	bool initClient() {
+		lastServHeartbeat = std::chrono::steady_clock::now();
 		inputMsgThread = std::thread(processInputMsgs, this);
 		if (!responseWas.load()) {
 			std::unique_lock ul{ responseMut };
@@ -283,23 +295,20 @@ private:
 			using namespace std::chrono_literals;
 			std::this_thread::sleep_for(100ms);
 		}
+		getInterlocutor();
 
-		return getInterlocutor();
+		return true;
 	}
 
-	bool getInterlocutor() {
+	void getInterlocutor() {
 		if (whoOnline.body.size() == 0) {
 			std::cout << "Nobody is online.\n\n";
-
-			return false;
 		} else {
 			std::cout << "Select the user you want to chat with:\n";
 			std::vector<std::string> names = getPossibleInterlocutors();
 			Helpers::printOptions(names);
 			interlocutor = names[Helpers::chooseOption(1, names.size()) - 1];
 			std::cout << "\nMessage will be sended to [" << interlocutor << "]\n\n";
-
-			return true;
 		}
 	}
 

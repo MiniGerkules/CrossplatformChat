@@ -25,6 +25,7 @@ protected:
 
 	std::thread broadcastThread;
 	std::thread heartbeatCheckerThread;
+	std::thread sendHeartbeatThread;
 	std::atomic_bool canContinue = true;
 
 	size_t nextID = 0;
@@ -51,6 +52,7 @@ public:
 			ioThread = std::thread([this]() { ioContext.run(); });
 			broadcastThread = std::thread(checkBroadcastCalls, std::ref(canContinue));
 			heartbeatCheckerThread = std::thread(checkHeartbeat, this);
+			sendHeartbeatThread = std::thread(sendHeartbeat, this);
 		} catch (const std::exception& error) {
 			std::cout << "[SERVER]: ERROR" << error.what() << "\n";
 			canContinue.store(false);
@@ -69,6 +71,10 @@ public:
 		canContinue.store(false); 
 		if (broadcastThread.joinable())
 			broadcastThread.join();
+		if (heartbeatCheckerThread.joinable())
+			heartbeatCheckerThread.join();
+		if (sendHeartbeatThread.joinable())
+			sendHeartbeatThread.join();
 
 		std::cout << "[SERVER]: Stopped\n";
 	}
@@ -105,11 +111,14 @@ public:
 
 	void messageAllClients(const Message<T>& msg, std::shared_ptr<Connection<T>> ignoredClient = nullptr) {
 		std::scoped_lock sq{ mapWithUsersMut };
+		for (const auto connection : connections) {
+			if (connection && connection->isConnected() && connection != ignoredClient)
+				connection->send(msg);
+		}
+
 		for (const auto& [name, pair] : users) {
-			if (pair.first && pair.first->isConnected()) {
-				if (pair.first != ignoredClient)
-					pair.first->send(msg);
-			}
+			if (pair.first && pair.first->isConnected() && pair.first != ignoredClient)
+				pair.first->send(msg);
 		}
 	}
 
@@ -218,6 +227,8 @@ protected:
 	}
 
 private:
+	using User = std::pair<std::string, std::shared_ptr<Connection<T>>>;
+
 	static void checkBroadcastCalls(std::atomic_bool& canContinue) {
 		boost::asio::io_context ioContext;
 
@@ -231,7 +242,6 @@ private:
 	static void checkHeartbeat(Server<T>* server) {
 		using namespace std::chrono;
 		using namespace std::chrono_literals;
-		using User = std::pair<std::string, std::shared_ptr<Connection<T>>>;
 
 		while (server->canContinue.load()) {
 			steady_clock::time_point now = steady_clock::now();
@@ -248,22 +258,35 @@ private:
 			}
 			server->mapWithUsersMut.unlock();
 
-			//clearDisconnectedClients(names);
-			if (!toDisconnect.empty()) {
-				for (User user : toDisconnect) {
-					user.second->disconnect();
-					server->onClientDisconnect(user.second);
-				}
-
-				server->mapWithUsersMut.lock();
-				for (User user : toDisconnect) {
-					server->users[user.first].first.reset();
-					server->users.erase(user.first);
-				}
-				server->mapWithUsersMut.unlock();
-			}
-			
+			clearDisconnectedClients(server, toDisconnect);
 			std::this_thread::sleep_for(100ms);
+		}
+	}
+
+	static void clearDisconnectedClients(Server<T>* server, const std::vector<User>& toDisconnect) {
+		if (!toDisconnect.empty()) {
+			for (User user : toDisconnect) {
+				user.second->disconnect();
+				server->onClientDisconnect(user.second);
+			}
+
+			server->mapWithUsersMut.lock();
+			for (User user : toDisconnect) {
+				server->users[user.first].first.reset();
+				server->users.erase(user.first);
+			}
+			server->mapWithUsersMut.unlock();
+		}
+	}
+
+	static void sendHeartbeat(Server<T>* server) {
+		using namespace std::chrono_literals;
+		Message<PossibleMessageIDs> msg;
+		msg.header.id = PossibleMessageIDs::sendHeartbeat;
+
+		while (server->canContinue.load()) {
+			server->messageAllClients(msg);
+			std::this_thread::sleep_for(1s);
 		}
 	}
 };
