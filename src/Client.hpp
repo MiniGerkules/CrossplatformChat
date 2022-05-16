@@ -61,8 +61,10 @@ public:
 			if (interlocutor != "")
 				std::cout << "Message sended to [" << interlocutor << "]\n\n";
 
-			if (!isConnected())
+			if (!isConnected()) {
+				std::cout << "The connection with the server is lost! The program will be closed.\n";
 				return;
+			}
 
 			if (current != "\\x" && isAvailable.load()) {
 				Message<PossibleMessageIDs> msg;
