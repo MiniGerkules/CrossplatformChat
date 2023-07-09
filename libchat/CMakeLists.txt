@@ -11,5 +11,7 @@ set(HEADERS
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES} ${HEADERS})
 
-set_compile_options_to(${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} PRIVATE include)
+
+set_compile_options_to(${PROJECT_NAME})
+add_boost_to(${PROJECT_NAME})

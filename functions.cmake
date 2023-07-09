@@ -1,7 +1,7 @@
 # Function set all needed compile options to target
 function(set_compile_options_to target)
     # Set c++17 standart
-    set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
+    set_property(TARGET ${target} PROPERTY CXX_STANDARD 11)
 
     # Set warning flags
     if (MSVC)
@@ -16,11 +16,13 @@ function(set_compile_options_to target)
     endif()
 endfunction()
 
-function(add_libraries_to target)
+function(add_project_libs_to target)
     # Include project library
     target_include_directories(${target} PRIVATE ${CMAKE_SOURCE_DIR}/libchat/include)
     target_link_libraries(${target} PRIVATE ${LIB_NAME})
+endfunction()
 
+function(add_boost_to target)
     # Include Boost
     target_include_directories(${target} PRIVATE ${Boost_INCLUDE_DIRS})
     target_link_libraries(${target} PRIVATE ${Boost_LIBRARIES})
