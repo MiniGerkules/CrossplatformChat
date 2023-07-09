@@ -1,2 +1,4 @@
 **/.vscode
 **/build
+**/*.pages
+**/.DS_Store
