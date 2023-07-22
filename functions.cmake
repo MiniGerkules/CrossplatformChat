@@ -1,7 +1,7 @@
 # Function set all needed compile options to target
 function(set_compile_options_to target)
-    # Set c++17 standart
-    set_property(TARGET ${target} PROPERTY CXX_STANDARD 11)
+    # Set c++20 standart
+    set_property(TARGET ${target} PROPERTY CXX_STANDARD 20)
 
     # Set warning flags
     if (MSVC)
