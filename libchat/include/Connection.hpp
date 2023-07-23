@@ -13,7 +13,8 @@ public:
     std::weak_ptr<ConnectionDelegate> delegate;
 
 public:
-    Connection(std::weak_ptr<ConnectionDelegate> delegate) : delegate{ std::move(delegate) } {
+    Connection(std::weak_ptr<ConnectionDelegate> delegate = std::weak_ptr<ConnectionDelegate>())
+            : delegate{ std::move(delegate) } {
     }
 
     virtual bool open() = 0;
