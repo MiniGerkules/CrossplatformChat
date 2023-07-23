@@ -9,7 +9,7 @@
 
 class Connection {
 public:
-    std::atomic<bool> isAvailable = false;
+    std::atomic<bool> isAlive = false;
     std::weak_ptr<ConnectionDelegate> delegate;
 
 public:
