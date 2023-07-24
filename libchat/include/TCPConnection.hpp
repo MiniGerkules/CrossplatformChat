@@ -71,7 +71,7 @@ private:
                                     use_awaitable);
                 
                 inMessages_.push(std::move(storage));
-                
+                dataAvailable_();
             }
         } catch (const std::exception &error) {
             lostConnection(error.what());
