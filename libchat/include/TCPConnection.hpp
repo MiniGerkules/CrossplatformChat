@@ -94,9 +94,9 @@ private:
     }
 
 private:
-    void lostConnection_(std::string errorMsg) {
+    void lostConnection_(const std::string_view errorMsg) {
         if (auto delegatePtr = delegate.lock()) {
-            delegatePtr->ifLostConnection(std::move(errorMsg));
+            delegatePtr->ifLostConnection(errorMsg);
         }
 
         close();
