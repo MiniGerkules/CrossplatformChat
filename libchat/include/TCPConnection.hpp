@@ -96,13 +96,15 @@ private:
 private:
     void lostConnection(std::string errorMsg) {
         if (auto delegatePtr = delegate.lock()) {
-            delegatePtr->ifLostConnection(*this, std::move(errorMsg));
+            delegatePtr->ifLostConnection(std::move(errorMsg));
         }
+
+        close();
     }
     
     void dataAvailable() {
         if (auto delegatePtr = delegate.lock()) {
-            delegatePtr->ifDataIsAvailable(*this);
+            delegatePtr->ifDataIsAvailable();
         }
     }
 };
