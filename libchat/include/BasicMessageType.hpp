@@ -8,10 +8,3 @@ enum class BasicMessageType : uint8_t {
     HEARTBEAT,
     ERROR
 };
-
-namespace MessageType {
-    template <BasicMessageType>
-    std::string getDescription() {
-        return "BasikMessageType";
-    }
-}
