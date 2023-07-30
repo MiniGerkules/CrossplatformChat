@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Exceptions.hpp"
+
 #include "Message.hpp"
 #include "UniversalMessage.hpp"
 

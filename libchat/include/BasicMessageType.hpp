@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string>
 
-#include "MessageTypesDescsGetters.hpp"
+#include "MessageTypesGeneralFuncs.hpp"
 
 enum class BasicMessageType : uint8_t {
     CHECK_APP,

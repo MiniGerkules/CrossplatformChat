@@ -3,8 +3,8 @@
 #include "MessageHandler.hpp"
 #include "TextHandlerDelegate.hpp"
 
+#include "MessageTypesGeneralFuncs.hpp"
 #include "BasicMessageType.hpp"
-#include "MessageTypesDescsGetters.hpp"
 
 class BasicMessageHandler : public MessageHandler {
     std::weak_ptr<TextHandlerDelegate> delegate;

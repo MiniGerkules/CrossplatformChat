@@ -10,9 +10,6 @@
 
 #include "BasicMessageHandler.hpp"
 
-#include "Message.hpp"
-#include "MessageConverter.hpp"
-
 template <typename Executor>
 class ConnectionManager : public ConnectionDelegate,
                           public std::enable_shared_from_this<ConnectionManager<Executor>> {
