@@ -2,11 +2,34 @@ cmake_minimum_required(VERSION 3.20)
 project(${LIB_NAME} LANGUAGES CXX)
 
 set(SOURCES
-    ./src/HeartbeatChecker.cpp
+    ./src/phony.cpp
 )
 set(HEADERS
-    ./include/Message.hpp
-    ./include/HeartbeatChecker.hpp
+    ./include/Exceptions.hpp
+    ./include/TSQueue.hpp
+
+    ./include/Connection/Connection.hpp
+    ./include/Connection/TCPConnection.hpp
+    ./include/Connection/ConnectionManager.hpp
+
+    ./include/Connection/Delegates/ConnectionDelegate.hpp
+    ./include/Connection/Delegates/ConnectionManagerDelegate.hpp
+
+    ./include/Logger/Logger.hpp
+    ./include/Logger/ConsoleLogger.hpp
+    ./include/Logger/LoggerMessageType.hpp
+
+    ./include/Messages/Message.hpp
+    ./include/Messages/UniversalMessage.hpp
+
+    ./include/Messages/Handlers/MessageHandler.hpp
+    ./include/Messages/Handlers/BasicMessageHandler.hpp
+
+    ./include/Messages/Types/BasicMessageType.hpp
+    ./include/Messages/Types/RegularMessageType.hpp
+    ./include/Messages/Types/MessageTypesGeneralFuncs.hpp
+
+    ./include/TextHandlerDelegate.hpp
 )
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES} ${HEADERS})
