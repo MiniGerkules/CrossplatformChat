@@ -1,6 +1,6 @@
 #pragma once
 
-#include "UniversalMessage.hpp"
+#include "../UniversalMessage.hpp"
 
 class MessageHandler {
 public:

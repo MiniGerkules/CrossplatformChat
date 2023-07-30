@@ -4,8 +4,8 @@
 #include <memory>
 #include <optional>
 
-#include "ConnectionDelegate.hpp"
-#include "UniversalMessage.hpp"
+#include "Delegates/ConnectionDelegate.hpp"
+#include "../Messages/UniversalMessage.hpp"
 
 class Connection {
 public:

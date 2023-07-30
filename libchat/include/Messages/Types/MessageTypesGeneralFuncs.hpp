@@ -2,8 +2,8 @@
 
 #include "Exceptions.hpp"
 
-#include "Message.hpp"
-#include "UniversalMessage.hpp"
+#include "../Message.hpp"
+#include "../UniversalMessage.hpp"
 
 namespace MessageType {
     template <typename MessageType>

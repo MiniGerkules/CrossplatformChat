@@ -6,9 +6,9 @@
 #include <boost/asio.hpp>
 
 #include "Connection.hpp"
-#include "ConnectionManagerDelegate.hpp"
+#include "Delegates/ConnectionManagerDelegate.hpp"
 
-#include "BasicMessageHandler.hpp"
+#include "../Messages/Handlers/BasicMessageHandler.hpp"
 
 template <typename Executor>
 class ConnectionManager : public ConnectionDelegate,
