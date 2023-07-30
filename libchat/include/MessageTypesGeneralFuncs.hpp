@@ -17,7 +17,7 @@ namespace MessageType {
         };
 
         auto desc = getDescription<MessageType>();
-        std::strcpy(msg.header.type, desc.c_str());
+        std::strncpy(msg.header.type, desc.c_str(), std::size(msg.header.type));
 
         return msg;
     }
