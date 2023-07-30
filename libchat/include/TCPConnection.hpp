@@ -62,16 +62,20 @@ private:
 
         try {
             for (;;) {
-                co_await async_read(socket_,
-                                    buffer(&storage.header, sizeof(storage.header)),
-                                    use_awaitable);
-                storage.data.resize(storage.header.size);
-                co_await async_read(socket_,
-                                    buffer(storage.data),
-                                    use_awaitable);
+                try {
+                    co_await async_read(socket_,
+                                        buffer(&storage.header, sizeof(storage.header)),
+                                        use_awaitable);
+                    storage.data.resize(storage.header.size);
+                    co_await async_read(socket_,
+                                        buffer(storage.data),
+                                        use_awaitable);
 
-                inMessages_.push(std::move(storage));
-                dataAvailable_();
+                    inMessages_.push(std::move(storage));
+                    dataAvailable_();
+                } catch (const std::bad_alloc &) {      // Ignore vector errors
+                } catch (const std::length_error &) {
+                }
             }
         } catch (const std::exception &error) {
             lostConnection_(error.what());
