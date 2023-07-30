@@ -12,8 +12,8 @@ enum class BasicMessageType : uint8_t {
 };
 
 namespace MessageType {
-    template <BasicMessageType>
-    std::string getDescription() {
+    template <>
+    std::string getDescription<BasicMessageType>() {
         return "BasicMessageType";
     }
 }
