@@ -8,9 +8,4 @@ namespace MessageType {
         throw DescriptionException{ "There isn't that message type!" };
         return "";
     }
-
-    template <BasicMessageType>
-    std::string getDescription() {
-        return "BasikMessageType";
-    }
 }
