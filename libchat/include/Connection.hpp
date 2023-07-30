@@ -19,8 +19,9 @@ public:
     
     virtual ~Connection() = default;
 
-    virtual bool open() = 0;
-    virtual void close() = 0;
-    virtual void send(UniversalMessage message) = 0;
-    virtual std::optional<UniversalMessage> read() = 0;
+    virtual bool open() noexcept = 0;
+    virtual void close() noexcept = 0;
+    
+    virtual void send(UniversalMessage message) noexcept = 0;
+    virtual std::optional<UniversalMessage> read() noexcept = 0;
 };

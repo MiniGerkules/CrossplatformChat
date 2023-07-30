@@ -22,7 +22,7 @@ public:
         boost::asio::co_spawn(socket_.get_executor(), asyncMessageReader_(), boost::asio::detached);
     }
 
-    bool open() override {
+    bool open() noexcept override {
         if (socket_.is_open()) return true;
 
         boost::system::error_code ec;
@@ -33,14 +33,14 @@ public:
         return res;
     }
 
-    void close() override {
+    void close() noexcept override {
         if (!socket_.is_open()) return;
 
         isAlive.store(false);
         socket_.close();
     }
 
-    void send(UniversalMessage message) override {
+    void send(UniversalMessage message) noexcept override {
         using boost::asio::detached;
 
         if (!isAlive) return;
@@ -48,14 +48,14 @@ public:
         co_spawn(socket_.get_executor(), asyncSendData_(std::move(message)), detached);
     }
 
-    std::optional<UniversalMessage> read() override {
+    std::optional<UniversalMessage> read() noexcept override {
         // There may be some messages when isAlive == false, so we don't check
         // that field
         return inMessages_.pop();
     }
 
 private:
-    boost::asio::awaitable<void> asyncMessageReader_() {
+    boost::asio::awaitable<void> asyncMessageReader_() noexcept {
         using namespace boost::asio;
 
         UniversalMessage storage;
@@ -78,7 +78,7 @@ private:
         }
     }
 
-    boost::asio::awaitable<void> asyncSendData_(UniversalMessage message) {
+    boost::asio::awaitable<void> asyncSendData_(UniversalMessage message) noexcept {
         using namespace boost::asio;
 
         try {
@@ -94,15 +94,13 @@ private:
     }
 
 private:
-    void lostConnection_(const std::string_view errorMsg) {
+    void lostConnection_(const std::string_view errorMsg) noexcept {
         if (auto delegatePtr = delegate.lock()) {
             delegatePtr->ifLostConnection(errorMsg);
         }
-
-        close();
     }
 
-    void dataAvailable_() {
+    void dataAvailable_() noexcept {
         if (auto delegatePtr = delegate.lock()) {
             delegatePtr->ifDataIsAvailable();
         }
