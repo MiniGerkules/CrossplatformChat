@@ -17,7 +17,6 @@ public:
     std::weak_ptr<ConnectionManagerDelegate<Executor>> delegate;
     
 private:
-    std::string connectionName_;
     std::unique_ptr<Connection> connection_;
     
     BasicMessageHandler handler_;
@@ -61,10 +60,6 @@ public:
     
     bool isAlive() const noexcept {
         return connection_->isAlive;
-    }
-    
-    std::string_view getConnectionName() const & {
-        return connectionName_;
     }
                               
     std::optional<UniversalMessage> read() noexcept {
