@@ -38,6 +38,8 @@ public:
     
     void wait() {
         std::unique_lock lock{ mutex_ };
+        if (!queue_.empty()) return;
+
         cv_.wait(lock, [this] { return !queue_.empty(); });
     }
 };
