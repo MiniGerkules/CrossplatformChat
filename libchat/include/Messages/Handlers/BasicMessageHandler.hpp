@@ -13,7 +13,7 @@ class BasicMessageHandler : public MessageHandler {
 public:
     bool canHandle(const UniversalMessage &message) override {
         auto desc = MessageType::getDescription<BasicMessageType>();
-        return message.header.type == desc;
+        return std::strncmp(message.header.type, desc.data(), std::size(message.header.type)) == 0;
     }
 
     void handle(const UniversalMessage &message) override {
