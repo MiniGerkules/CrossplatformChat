@@ -4,5 +4,5 @@
 
 class Logger {
 public:
-    virtual void log(const char* message, const LoggerMsgType type) = 0;
+    virtual void log(const char* message, const LoggerMessageType type) = 0;
 };
