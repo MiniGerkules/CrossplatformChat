@@ -9,7 +9,7 @@ private:
     static std::mutex outputMutex_;
     
 public:
-    void log(const char* message, const LoggerMsgType type) override {
+    void log(const char* message, const LoggerMessageType type) override {
         auto typeDesc = getMsgTypeDescription(type);
         
         std::lock_guard lock{ ConsoleLogger::outputMutex_ };
@@ -17,15 +17,15 @@ public:
     }
     
 private:
-    std::string getMsgTypeDescription(const LiggerMsgType type) {
+    std::string getMsgTypeDescription(const LoggerMessageType type) {
         switch (type) {
-            case LoggerMsgType::INFO:
+            case LoggerMessageType::INFO:
                 return "[INFO]";
-            case LoggerMsgType::DEBUG:
+            case LoggerMessageType::DEBUG:
                 return "[DEBUG]";
-            case LoggerMsgType::WARNING:
+            case LoggerMessageType::WARNING:
                 return "[WARNING]";
-            case LoggerMsgType::ERROR:
+            case LoggerMessageType::ERROR:
                 return "[ERROR]";
             default:
                 return "[UNKNOWN]";
