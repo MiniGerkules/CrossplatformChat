@@ -3,9 +3,13 @@
 #include "Message.hpp"
 #include "UniversalMessage.hpp"
 
-#include "MessageTypesDescsGetters.hpp"
-
 namespace MessageType {
+    template <typename MessageType>
+    std::string getDescription() {
+        throw DescriptionException{ "There isn't that message type!" };
+        return "";
+    }
+
     template <typename MessageType>
     UniversalMessage convertToUniversal(Message<MessageType> message) {
         UniversalMessage msg = {
