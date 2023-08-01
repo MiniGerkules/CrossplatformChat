@@ -11,5 +11,5 @@ public:
 
 public:
     virtual ~Displayer() = default;
-    virtual void display(UniversalMessage message) = 0;
+    virtual void display(const UniversalMessage &message) = 0;
 };
