@@ -6,6 +6,8 @@
 
 class MessageHandler : public ResponderChainNode<MessageHandler> {
 public:
-    virtual bool canHandle(const UniversalMessage &message) = 0;
-    virtual void handle(const UniversalMessage &message) = 0;
+    virtual bool handle(const UniversalMessage &message) = 0;
+
+private:
+    virtual bool canHandle_(const UniversalMessage &message) = 0;
 };
