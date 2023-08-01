@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Exceptions.hpp"
+#include <Messages/Types/DescriptionException.hpp>
 
 #include "../Message.hpp"
 #include "../UniversalMessage.hpp"
@@ -26,5 +26,11 @@ namespace MessageType {
         std::strncpy(msg.header.type, desc.c_str(), std::size(msg.header.type));
 
         return msg;
+    }
+
+    template <typename MessageType>
+    bool isUniversalMessageType(const UniversalMessage &message) {
+        auto desc = getDescription<MessageType>();
+        return std::strncmp(message.header.type, desc.data(), std::size(message.header.type)) == 0;
     }
 }
