@@ -12,7 +12,7 @@ class BasicMessageHandler : public MessageHandler {
 //MARK: - Overrides methods of MessageHandler interface
 public:
     bool handle(const UniversalMessage &message) override {
-        if (!canHandle_(message)) {
+        if (!MessageType::isUniversalMessageType<BasicMessageType>(message)) {
             return next_->handle(message);
         } else {
             if (message.header.size != 0) {
@@ -32,23 +32,17 @@ public:
     }
 
     bool isHeartbeat(const UniversalMessage &message) {
-        return canHandle_(message) &&
+        return MessageType::isUniversalMessageType<BasicMessageType>(message) &&
                message.header.typeOption == static_cast<uint8_t>(BasicMessageType::HEARTBEAT);
     }
 
     bool isCheckApp(const UniversalMessage &message) {
-        return canHandle_(message) &&
+        return MessageType::isUniversalMessageType<BasicMessageType>(message) &&
                message.header.typeOption == static_cast<uint8_t>(BasicMessageType::CHECK_APP);
     }
 
     bool isError(const UniversalMessage &message) {
-        return canHandle_(message) &&
+        return MessageType::isUniversalMessageType<BasicMessageType>(message) &&
                message.header.typeOption == static_cast<uint8_t>(BasicMessageType::ERROR);
-    }
-    
-private:
-    bool canHandle_(const UniversalMessage &message) {
-        auto desc = MessageType::getDescription<BasicMessageType>();
-        return std::strncmp(message.header.type, desc.data(), std::size(message.header.type)) == 0;
     }
 };
