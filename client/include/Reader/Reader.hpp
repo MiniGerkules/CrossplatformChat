@@ -11,5 +11,6 @@ public:
     std::weak_ptr<ReaderDelegate> delegate;
 
 public:
+    virtual ~Reader() = default;
     virtual UniversalMessage read() = 0;
 };
