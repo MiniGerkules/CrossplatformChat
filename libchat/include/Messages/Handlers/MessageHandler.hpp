@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../../ResponderChainNode.hpp"
-
 #include "../UniversalMessage.hpp"
 
 class MessageHandler {
