@@ -45,4 +45,24 @@ bool isMessageType(const UniversalMessage &universal) {
     return isMessageType<MessageType>(universal.header);
 }
 
+template <typename MessageType>
+std::optional<MessageHeader<MessageType>> convertToTyped(const UniversalMessageHeader &header) {
+    if (!isMessageType<MessageType>(header)) return std::nullopt;
+
+    return MessageHeader<MessageType> {
+        .typeOption = static_cast<MessageType>(header.typeOption),
+        .size = header.size
+    };
+}
+
+template <typename MessageType>
+std::optional<Message<MessageType>> convertToTyped(UniversalMessage universal) {
+    if (!isMessageType<MessageType>(universal)) return std::nullopt;
+
+    return Message<MessageType> {
+        .header = convertToTyped<MessageType>(universal.header),
+        .data = std::move(universal.data)
+    };
+}
+
 } // MessageType
