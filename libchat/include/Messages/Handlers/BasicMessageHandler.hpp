@@ -16,12 +16,14 @@ public:
             return next_->handle(message);
         }
 
-        if (message.header.size != 0) {
-            if (auto delegatePtr = delegate_.lock()) {
-                if (isHeartbeat(message))
-                    delegatePtr->messageIsHeartbeat();
-                else if (isCheckApp(message))
-                    delegatePtr->messageIsCheck();
+        if (auto delegatePtr = delegate_.lock()) {
+            if (isHeartbeat(message)) {
+                delegatePtr->messageIsHeartbeat();
+            } else if (isCheckApp(message)) {
+                delegatePtr->messageIsCheck();
+            } else {
+                if (message.header.size == 0)
+                    delegatePtr->messageIsError(std::string_view());
                 else
                     delegatePtr->messageIsError(reinterpret_cast<const char *>(message.data.data()));
             }
