@@ -29,7 +29,7 @@ public:
         if (queue_.empty()) {
             return std::nullopt;
         } else {
-            T elem = queue_.front();
+            T elem = std::move(queue_.front());
             queue_.pop();
 
             return elem;
