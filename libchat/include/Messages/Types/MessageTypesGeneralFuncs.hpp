@@ -35,10 +35,14 @@ UniversalMessage convertToUniversal(Message<MessageType> message) {
 }
 
 template <typename MessageType>
-bool isMessageType(const UniversalMessage &universal) {
+bool isMessageType(const UniversalMessageHeader &header) {
     auto desc = getDescription<MessageType>();
-    return std::strncmp(universal.header.type, desc.data(),
-                        std::size(universal.header.type)) == 0;
+    return std::strncmp(header.type, desc.data(), std::size(header.type)) == 0;
+}
+
+template <typename MessageType>
+bool isMessageType(const UniversalMessage &universal) {
+    return isMessageType<MessageType>(universal.header);
 }
 
 } // MessageType
