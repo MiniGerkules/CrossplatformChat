@@ -12,20 +12,26 @@ class BasicMessageHandler : public MessageHandler {
 //MARK: - Overrides methods of MessageHandler interface
 public:
     bool handle(const UniversalMessage &message) override {
-        if (!MessageType::isMessageType<BasicMessageType>(message)) {
+        auto regular = MessageType::convertToTyped<BasicMessageType>(message.header);
+        if (!regular.has_value())
             return next_->handle(message);
-        }
 
         if (auto delegatePtr = delegate_.lock()) {
-            if (isHeartbeat(message)) {
-                delegatePtr->messageIsHeartbeat();
-            } else if (isCheckApp(message)) {
-                delegatePtr->messageIsCheck();
-            } else {
-                if (message.header.size == 0)
-                    delegatePtr->messageIsError(std::string_view());
-                else
-                    delegatePtr->messageIsError(reinterpret_cast<const char *>(message.data.data()));
+            switch (regular.value().typeOption) {
+                case BasicMessageType::HEARTBEAT:
+                    delegatePtr->messageIsHeartbeat();
+                    break;
+                case BasicMessageType::CHECK_APP:
+                    delegatePtr->messageIsCheck();
+                    break;
+                case BasicMessageType::ERROR:
+                    if (message.header.size == 0)
+                        delegatePtr->messageIsError(std::string_view());
+                    else
+                        delegatePtr->messageIsError(
+                            reinterpret_cast<const char *>(message.data.data())
+                        );
+                    break;
             }
         }
 
