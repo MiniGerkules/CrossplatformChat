@@ -54,8 +54,8 @@ public:
     ConnectionManager(std::unique_ptr<Connection> connection,
                       const Executor &executor)
             : connection_{ std::move(connection) }, executor_{ executor } {
-        connection_->open();
         connection_->delegate = this->weak_from_this();
+        connection_->open();
     }
     
     bool isAlive() const noexcept {
