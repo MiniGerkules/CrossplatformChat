@@ -13,20 +13,24 @@ namespace MessageType {
     }
 
     template <typename MessageType>
-    UniversalMessage convertToUniversal(Message<MessageType> message) {
-        UniversalMessage universal = {
-            .header = {
-                .size = message.header.size,
-                .typeOption = static_cast<uint8_t>(message.header.typeOption)
-            },
-            .data = std::move(message.data)
+    UniversalMessageHeader convertToUniversal(const MessageHeader<MessageType> &header) {
+        UniversalMessageHeader universal = {
+            .size = header.size,
+            .typeOption = static_cast<uint8_t>(header.typeOption)
         };
 
         auto desc = getDescription<MessageType>();
-        std::strncpy(universal.header.type, desc.c_str(),
-                     std::size(universal.header.type));
+        std::strncpy(universal.type, desc.c_str(), std::size(universal.type));
 
         return universal;
+    }
+
+    template <typename MessageType>
+    UniversalMessage convertToUniversal(Message<MessageType> message) {
+        return UniversalMessage {
+            .header = convertToUniversal(message.header),
+            .data = std::move(message.data)
+        };
     }
 
     template <typename MessageType>
