@@ -3,6 +3,7 @@
 #include "MessageHandler.hpp"
 
 #include "../Types/BasicMessageType.hpp"
+#include "../Types/MessageTypesFuncs.hpp"
 
 #include "Delegates/BasicMessageHandlerDelegate.hpp"
 
@@ -25,12 +26,7 @@ public:
                     delegatePtr->messageIsCheck();
                     break;
                 case BasicMessageType::ERROR:
-                    if (message.header.size == 0)
-                        delegatePtr->messageIsError(std::string_view());
-                    else
-                        delegatePtr->messageIsError(
-                            reinterpret_cast<const char *>(message.data.data())
-                        );
+                    delegatePtr->messageIsError(MessageType::getTextFrom(message));
                     break;
             }
         }
