@@ -5,7 +5,8 @@
 #include <Messages/Handlers/Delegates/RegularMessageHandlerDelegate.hpp>
 
 class RegularMessageHandler : public MessageHandler {
-    std::weak_ptr<RegularMessageHandlerDelegate> delegate_;
+public:
+    std::weak_ptr<RegularMessageHandlerDelegate> delegate;
 
 //MARK: - Overrides methods of MessageHandler interface
 public:
@@ -14,7 +15,7 @@ public:
         if (!regular.has_value())
             return next_->handle(message);
 
-        if (auto delegatePtr = delegate_.lock()) {
+        if (auto delegatePtr = delegate.lock()) {
             switch (regular.value().typeOption) {
                 case RegularMessageType::SET_NAME:
                     delegatePtr->messageSetsName(MessageType::getTextFrom(message));
@@ -33,8 +34,7 @@ public:
 
 //MARK: - Constructor and methods
 public:
-    RegularMessageHandler(std::unique_ptr<MessageHandler> next = {},
-                          std::weak_ptr<RegularMessageHandlerDelegate> delegate = {})
-            : MessageHandler{ std::move(next) }, delegate_{ std::move(delegate) } {
+    RegularMessageHandler(std::unique_ptr<MessageHandler> next = {})
+            : MessageHandler{ std::move(next) } {
     }
 };

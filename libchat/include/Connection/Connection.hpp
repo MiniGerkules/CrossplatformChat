@@ -13,10 +13,6 @@ public:
     std::weak_ptr<ConnectionDelegate> delegate;
 
 public:
-    Connection(std::weak_ptr<ConnectionDelegate> delegate = std::weak_ptr<ConnectionDelegate>())
-            : delegate{ std::move(delegate) } {
-    }
-    
     virtual ~Connection() = default;
 
     virtual bool open() noexcept = 0;

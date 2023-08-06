@@ -13,9 +13,7 @@ class TCPConnection : public Connection {
     TSQueue<UniversalMessage> inMessages_;
 
 public:
-    TCPConnection(boost::asio::ip::tcp::socket socket,
-                  std::weak_ptr<ConnectionDelegate> delegate = std::weak_ptr<ConnectionDelegate>())
-            : Connection(std::move(delegate)), socket_{ std::move(socket) } {
+    TCPConnection(boost::asio::ip::tcp::socket socket) : socket_{ std::move(socket) } {
         isAlive.store(socket_.is_open());
 
         // Start async read from socket

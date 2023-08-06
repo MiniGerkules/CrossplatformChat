@@ -8,7 +8,8 @@
 #include "Delegates/BasicMessageHandlerDelegate.hpp"
 
 class BasicMessageHandler : public MessageHandler {
-    std::weak_ptr<BasicMessageHandlerDelegate> delegate_;
+public:
+    std::weak_ptr<BasicMessageHandlerDelegate> delegate;
 
 //MARK: - Overrides methods of MessageHandler interface
 public:
@@ -17,7 +18,7 @@ public:
         if (!regular.has_value())
             return next_->handle(message);
 
-        if (auto delegatePtr = delegate_.lock()) {
+        if (auto delegatePtr = delegate.lock()) {
             switch (regular.value().typeOption) {
                 case BasicMessageType::HEARTBEAT:
                     delegatePtr->messageIsHeartbeat();
@@ -36,9 +37,8 @@ public:
 
 //MARK: - Constructor and methods
 public:
-    BasicMessageHandler(std::unique_ptr<MessageHandler> next = {},
-                        std::weak_ptr<BasicMessageHandlerDelegate> delegate = {})
-            : MessageHandler{ std::move(next) }, delegate_{ std::move(delegate) } {
+    BasicMessageHandler(std::unique_ptr<MessageHandler> next = {})
+            : MessageHandler{ std::move(next) } {
     }
 
     bool isHeartbeat(const UniversalMessage &message) {
