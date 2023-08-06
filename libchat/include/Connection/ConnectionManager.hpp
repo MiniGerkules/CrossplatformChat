@@ -5,6 +5,8 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/asio.hpp>
 
+#include <TSQueue.hpp>
+
 #include "Connection.hpp"
 #include "Delegates/ConnectionManagerDelegate.hpp"
 
