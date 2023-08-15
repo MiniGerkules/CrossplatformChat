@@ -100,10 +100,11 @@ std::optional<MessageHeader<MessageType>> convertToTyped(const UniversalMessageH
 
 template <typename MessageType>
 std::optional<Message<MessageType>> convertToTyped(UniversalMessage universal) {
-    if (!isMessageType<MessageType>(universal)) return std::nullopt;
+    auto header = convertToTyped<MessageType>(universal.header);
+    if (!header.has_value()) return std::nullopt;
 
     return Message<MessageType> {
-        .header = convertToTyped<MessageType>(universal.header),
+        .header = header.value(),
         .data = std::move(universal.data)
     };
 }
