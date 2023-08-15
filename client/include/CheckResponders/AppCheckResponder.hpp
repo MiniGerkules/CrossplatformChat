@@ -10,5 +10,5 @@ public:
 public:
     virtual ~AppCheckResponder() = default;
 
-    virtual Message_t createRespond(const Message_t& request) = 0;
+    virtual Message_t createResponse(const Message_t& request) = 0;
 };

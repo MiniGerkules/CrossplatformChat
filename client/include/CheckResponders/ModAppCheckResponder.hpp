@@ -9,7 +9,7 @@
 
 class ModAppCheckResponder final : public AppCheckResponder {
 public:
-    Message_t createRespond(const Message_t& request) override {
+    Message_t createResponse(const Message_t& request) override {
         auto text = MessageType::getTextFrom(request);
         uint64_t requestNum;
         auto [_, ec] = std::from_chars(text.data(), text.data() + text.size(), requestNum);
