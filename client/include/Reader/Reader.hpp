@@ -13,5 +13,6 @@ public:
 
 public:
     virtual ~Reader() = default;
+
     virtual std::optional<std::string> read() = 0;
 };
