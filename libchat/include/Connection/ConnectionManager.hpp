@@ -76,7 +76,7 @@ public:
     }
 
     template <typename Executor>
-    void startSendingHeartbeat(const Executor &executor) {
+    void startSendingHeartbeat(Executor &executor) {
         if (isSendingHeartbeat_.load()) return;
 
         isSendingHeartbeat_.store(true);
@@ -89,7 +89,7 @@ public:
 
 private:
     template <typename Executor>
-    boost::asio::awaitable<void> asyncSendingHeartbeat(const Executor &executor) {
+    boost::asio::awaitable<void> asyncSendingHeartbeat(Executor &executor) {
         const auto message = MessageType::convertToUniversal(
             Message<BasicMessageType> {
                 .header = {
