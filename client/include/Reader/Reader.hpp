@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 
 #include <Messages/UniversalMessage.hpp>
 
@@ -12,5 +13,5 @@ public:
 
 public:
     virtual ~Reader() = default;
-    virtual UniversalMessage read() = 0;
+    virtual std::optional<std::string> read() = 0;
 };
