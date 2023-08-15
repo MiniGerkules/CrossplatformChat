@@ -2,8 +2,8 @@
 
 #include <string_view>
 
-#include <Messages/Message.hpp>
-#include <Messages/UniversalMessage.hpp>
+#include "Messages/Message.hpp"
+#include "Messages/UniversalMessage.hpp"
 
 namespace MessageType {
 

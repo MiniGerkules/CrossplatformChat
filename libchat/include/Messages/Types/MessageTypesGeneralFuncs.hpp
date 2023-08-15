@@ -1,9 +1,8 @@
 #pragma once
 
-#include <Messages/Types/DescriptionException.hpp>
-
-#include "../Message.hpp"
-#include "../UniversalMessage.hpp"
+#include "Messages/Message.hpp"
+#include "Messages/UniversalMessage.hpp"
+#include "Messages/Types/DescriptionException.hpp"
 
 namespace MessageType {
 

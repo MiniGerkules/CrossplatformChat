@@ -4,8 +4,9 @@
 #include <memory>
 #include <optional>
 
+#include "Messages/UniversalMessage.hpp"
+
 #include "Delegates/ConnectionDelegate.hpp"
-#include "../Messages/UniversalMessage.hpp"
 
 class Connection {
 public:
@@ -17,7 +18,7 @@ public:
 
     virtual bool open() noexcept = 0;
     virtual void close() noexcept = 0;
-    
+
     virtual void send(UniversalMessage message) noexcept = 0;
     virtual std::optional<UniversalMessage> read() noexcept = 0;
 };

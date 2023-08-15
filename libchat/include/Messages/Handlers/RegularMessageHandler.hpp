@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Messages/Types/RegularMessageType.hpp>
-#include <Messages/Handlers/MessageHandler.hpp>
-#include <Messages/Handlers/Delegates/RegularMessageHandlerDelegate.hpp>
+#include "Messages/Types/RegularMessageType.hpp"
+#include "Messages/Handlers/MessageHandler.hpp"
+#include "Messages/Handlers/Delegates/RegularMessageHandlerDelegate.hpp"
 
 class RegularMessageHandler : public MessageHandler {
 public:

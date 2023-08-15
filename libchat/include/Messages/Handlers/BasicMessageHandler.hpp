@@ -1,10 +1,9 @@
 #pragma once
 
+#include "Messages/Types/BasicMessageType.hpp"
+#include "Messages/Types/MessageTypesFuncs.hpp"
+
 #include "MessageHandler.hpp"
-
-#include "../Types/BasicMessageType.hpp"
-#include "../Types/MessageTypesFuncs.hpp"
-
 #include "Delegates/BasicMessageHandlerDelegate.hpp"
 
 class BasicMessageHandler : public MessageHandler {

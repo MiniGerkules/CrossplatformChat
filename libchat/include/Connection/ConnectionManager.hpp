@@ -5,13 +5,12 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/asio.hpp>
 
-#include <TSQueue.hpp>
+#include "TSQueue.hpp"
+#include "Messages/Handlers/BasicMessageHandler.hpp"
 
 #include "Connection.hpp"
 #include "Delegates/ConnectionManagerDelegate.hpp"
 #include "Exceptions/ConnectionException.hpp"
-
-#include "../Messages/Handlers/BasicMessageHandler.hpp"
 
 class ConnectionManager : public ConnectionDelegate,
                           public std::enable_shared_from_this<ConnectionManager> {

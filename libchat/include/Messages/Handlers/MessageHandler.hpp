@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../UniversalMessage.hpp"
+#include "Messages/UniversalMessage.hpp"
 
 class MessageHandler {
 protected:

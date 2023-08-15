@@ -5,6 +5,7 @@
 #include <boost/lockfree/queue.hpp>
 
 #include "TSQueue.hpp"
+
 #include "Connection.hpp"
 
 class TCPConnection : public Connection {
