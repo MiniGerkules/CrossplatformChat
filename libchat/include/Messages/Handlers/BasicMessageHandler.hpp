@@ -10,6 +10,23 @@ class BasicMessageHandler : public MessageHandler {
 public:
     std::weak_ptr<BasicMessageHandlerDelegate> delegate;
 
+//MARK: - Static functions
+public:
+    static bool isHeartbeat(const UniversalMessage &message) {
+        return MessageType::isMessageType<BasicMessageType>(message) &&
+        message.header.typeOption == static_cast<uint8_t>(BasicMessageType::HEARTBEAT);
+    }
+
+    static bool isCheckApp(const UniversalMessage &message) {
+        return MessageType::isMessageType<BasicMessageType>(message) &&
+        message.header.typeOption == static_cast<uint8_t>(BasicMessageType::CHECK_APP);
+    }
+
+    static bool isError(const UniversalMessage &message) {
+        return MessageType::isMessageType<BasicMessageType>(message) &&
+        message.header.typeOption == static_cast<uint8_t>(BasicMessageType::ERROR);
+    }
+
 //MARK: - Overrides methods of MessageHandler interface
 public:
     bool handle(const UniversalMessage &message) override {
@@ -38,20 +55,5 @@ public:
 public:
     BasicMessageHandler(std::unique_ptr<MessageHandler> next = {})
             : MessageHandler{ std::move(next) } {
-    }
-
-    bool isHeartbeat(const UniversalMessage &message) {
-        return MessageType::isMessageType<BasicMessageType>(message) &&
-               message.header.typeOption == static_cast<uint8_t>(BasicMessageType::HEARTBEAT);
-    }
-
-    bool isCheckApp(const UniversalMessage &message) {
-        return MessageType::isMessageType<BasicMessageType>(message) &&
-               message.header.typeOption == static_cast<uint8_t>(BasicMessageType::CHECK_APP);
-    }
-
-    bool isError(const UniversalMessage &message) {
-        return MessageType::isMessageType<BasicMessageType>(message) &&
-               message.header.typeOption == static_cast<uint8_t>(BasicMessageType::ERROR);
     }
 };
