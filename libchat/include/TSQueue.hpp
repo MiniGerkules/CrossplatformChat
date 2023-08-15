@@ -5,7 +5,7 @@
 #include <optional>
 
 template <typename T>
-class TSQueue {
+class TSQueue final {
     std::mutex mutex_;
     std::queue<T> queue_;
     std::condition_variable cv_;

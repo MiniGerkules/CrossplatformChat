@@ -7,7 +7,7 @@
 #include "Reader.hpp"
 
 template <typename Executor, typename Stream>
-class ConsoleReader : public Reader {
+class ConsoleReader final : public Reader {
     Stream stream_;
     TSQueue<std::string> inputs_;
 

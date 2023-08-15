@@ -2,7 +2,7 @@
 
 #include "BaseException.hpp"
 
-class DescriptionException : public BaseException {
+class DescriptionException final : public BaseException {
 public:
     DescriptionException(const char *errorMsg) : BaseException{ errorMsg } {
     }

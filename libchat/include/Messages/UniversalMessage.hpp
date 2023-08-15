@@ -5,7 +5,7 @@
 
 #pragma pack(push, 1)
 
-struct UniversalMessageHeader {
+struct UniversalMessageHeader final {
     char type[30];
     uint8_t typeOption;
     uint32_t size;
@@ -13,7 +13,7 @@ struct UniversalMessageHeader {
 
 #pragma pack(pop)
 
-struct UniversalMessage {
+struct UniversalMessage final {
     UniversalMessageHeader header;
     std::vector<uint8_t> data;
 };

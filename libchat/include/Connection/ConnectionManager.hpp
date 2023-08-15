@@ -12,8 +12,8 @@
 #include "Delegates/ConnectionManagerDelegate.hpp"
 #include "Exceptions/ConnectionException.hpp"
 
-class ConnectionManager : public ConnectionDelegate,
-                          public std::enable_shared_from_this<ConnectionManager> {
+class ConnectionManager final : public ConnectionDelegate,
+                                public std::enable_shared_from_this<ConnectionManager> {
 public:
     std::weak_ptr<ConnectionManagerDelegate> delegate;
 

@@ -7,7 +7,7 @@
 #include "Displayer.hpp"
 #include "DisplayerException.hpp"
 
-class ConsoleDisplayer : public TextHandlerDelegate, public Displayer {
+class ConsoleDisplayer final : public TextHandlerDelegate, public Displayer {
 //MARK: - Overrides of TextHandlerDelegate interface
 public:
     void handleText(const std::string_view text) override {

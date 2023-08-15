@@ -8,7 +8,7 @@
 
 #include "Connection.hpp"
 
-class TCPConnection : public Connection {
+class TCPConnection final : public Connection {
     boost::asio::ip::tcp::socket socket_;
 
     TSQueue<UniversalMessage> inMessages_;

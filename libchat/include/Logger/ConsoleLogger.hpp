@@ -5,7 +5,7 @@
 
 #include "Logger.hpp"
 
-class ConsoleLogger : public Logger {
+class ConsoleLogger final : public Logger {
 private:
     static std::mutex outputMutex_;
 
