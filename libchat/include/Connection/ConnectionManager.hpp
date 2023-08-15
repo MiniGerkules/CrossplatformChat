@@ -20,7 +20,6 @@ public:
 private:
     std::unique_ptr<Connection> connection_;
 
-    BasicMessageHandler handler_;
     TSQueue<UniversalMessage> inMessages_;
 
     boost::posix_time::millisec period_{ 1'000 };
@@ -40,7 +39,7 @@ public:
         auto msg = connection_->read();
         if (!msg.has_value()) return;
 
-        if (!handler_.isHeartbeat(msg.value())) {
+        if (!BasicMessageHandler::isHeartbeat(msg.value())) {
             inMessages_.push(std::move(msg.value()));
 
             if (auto delegatePtr = delegate.lock()) {
