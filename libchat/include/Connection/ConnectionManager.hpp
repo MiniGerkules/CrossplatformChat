@@ -95,8 +95,7 @@ private:
                 .header = {
                     .typeOption = BasicMessageType::HEARTBEAT,
                     .size = 0
-                },
-                .data = {}
+                }
             }
         );
         boost::asio::deadline_timer timer{ executor };
