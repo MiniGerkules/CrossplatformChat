@@ -6,6 +6,8 @@
 #include "Messages/Message.hpp"
 #include "Messages/UniversalMessage.hpp"
 
+#include "DescriptionException.hpp"
+
 namespace MessageType {
 
 namespace Details {
