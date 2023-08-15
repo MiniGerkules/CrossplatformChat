@@ -11,10 +11,6 @@ class TSQueue {
     std::condition_variable cv_;
 
 public:
-    TSQueue() = default;
-    TSQueue(const TSQueue &other) = delete;
-
-public:
     void push(T elem) {
         std::unique_lock lock{ mutex_ };
         queue_.push(std::move(elem));
