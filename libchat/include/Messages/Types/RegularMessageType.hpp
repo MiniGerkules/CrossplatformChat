@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string>
 
-#include "MessageTypesGeneralFuncs.hpp"
+#include "MessageTypesFuncs.hpp"
 
 enum class RegularMessageType : uint8_t {
     SET_NAME,
