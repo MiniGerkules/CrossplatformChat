@@ -12,19 +12,17 @@
 
 #include "../Messages/Handlers/BasicMessageHandler.hpp"
 
-template <typename Executor>
 class ConnectionManager : public ConnectionDelegate,
-                          public std::enable_shared_from_this<ConnectionManager<Executor>> {
+                          public std::enable_shared_from_this<ConnectionManager> {
 public:
-    std::weak_ptr<ConnectionManagerDelegate<Executor>> delegate;
+    std::weak_ptr<ConnectionManagerDelegate> delegate;
     
 private:
     std::unique_ptr<Connection> connection_;
     
     BasicMessageHandler handler_;
     TSQueue<UniversalMessage> inMessages_;
-                              
-    const Executor &executor_;
+
     boost::posix_time::millisec period_{ 1'000 };
     std::atomic<bool> isSendingHeartbeat_ = false;
     
@@ -53,13 +51,12 @@ public:
     
     //MARK: - Constructor and methods
 public:
-    ConnectionManager(std::unique_ptr<Connection> connection,
-                      const Executor &executor)
-            : connection_{ std::move(connection) }, executor_{ executor } {
+    ConnectionManager(std::unique_ptr<Connection> connection)
+            : connection_{ std::move(connection) } {
         connection_->delegate = this->weak_from_this();
         connection_->open();
     }
-    
+
     bool isAlive() const noexcept {
         return connection_->isAlive;
     }
@@ -75,12 +72,13 @@ public:
     void close() noexcept {
         connection_->close();
     }
-                              
-    void startSendingHeartbeat() {
+
+    template <typename Executor>
+    void startSendingHeartbeat(const Executor &executor) {
         if (isSendingHeartbeat_.load()) return;
 
         isSendingHeartbeat_.store(true);
-        boost::asio::co_spawn(executor_, asyncSendingHeartbeat(), boost::asio::detached);
+        boost::asio::co_spawn(executor, asyncSendingHeartbeat(executor), boost::asio::detached);
     }
 
     void stopSendingHeartbeat() {
@@ -88,7 +86,8 @@ public:
     }
 
 private:
-    boost::asio::awaitable<void> asyncSendingHeartbeat() {
+    template <typename Executor>
+    boost::asio::awaitable<void> asyncSendingHeartbeat(const Executor &executor) {
         const auto message = MessageType::convertToUniversal(
             Message<BasicMessageType> {
                 .header = {
@@ -98,7 +97,7 @@ private:
                 .data = {}
             }
         );
-        boost::asio::deadline_timer timer{ executor_ };
+        boost::asio::deadline_timer timer{ executor };
         
         while (isSendingHeartbeat_) {
             timer.expires_from_now(period_);
