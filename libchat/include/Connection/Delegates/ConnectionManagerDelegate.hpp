@@ -6,7 +6,7 @@ class ConnectionManager;
 
 class ConnectionManagerDelegate {
 public:
-    virtual void ifLostConnection(const ConnectionManager &manager,
+    virtual void ifLostConnection(ConnectionManager &manager,
                                   const std::string_view errorMsg) = 0;
-    virtual void ifDataIsAvailable(const ConnectionManager &manager) = 0;
+    virtual void ifDataIsAvailable(ConnectionManager &manager) = 0;
 };
