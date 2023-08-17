@@ -1,8 +1,9 @@
 #pragma once
 
 #include "Messages/Types/RegularMessageType.hpp"
-#include "Messages/Handlers/MessageHandler.hpp"
-#include "Messages/Handlers/Delegates/RegularMessageHandlerDelegate.hpp"
+
+#include "MessageHandler.hpp"
+#include "Delegates/RegularMessageHandlerDelegate.hpp"
 
 class RegularMessageHandler : public MessageHandler {
 public:
@@ -22,9 +23,6 @@ public:
                     break;
                 case RegularMessageType::TEXT_MESSAGE:
                     delegatePtr->messageIsText(MessageType::getTextFrom(message));
-                    break;
-                case RegularMessageType::DISCONNECTED:
-                    delegatePtr->messageAboutDisconnection();
                     break;
             }
         }

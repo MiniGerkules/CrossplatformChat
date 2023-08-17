@@ -17,11 +17,6 @@ public:
         message.header.typeOption == static_cast<uint8_t>(BasicMessageType::HEARTBEAT);
     }
 
-    static bool isCheckApp(const UniversalMessage &message) {
-        return MessageType::isMessageType<BasicMessageType>(message) &&
-        message.header.typeOption == static_cast<uint8_t>(BasicMessageType::CHECK_APP);
-    }
-
     static bool isError(const UniversalMessage &message) {
         return MessageType::isMessageType<BasicMessageType>(message) &&
         message.header.typeOption == static_cast<uint8_t>(BasicMessageType::ERROR);
@@ -38,9 +33,6 @@ public:
             switch (regular.value().typeOption) {
                 case BasicMessageType::HEARTBEAT:
                     delegatePtr->messageIsHeartbeat();
-                    break;
-                case BasicMessageType::CHECK_APP:
-                    delegatePtr->messageIsCheck();
                     break;
                 case BasicMessageType::ERROR:
                     delegatePtr->messageIsError(MessageType::getTextFrom(message));
