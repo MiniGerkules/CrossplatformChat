@@ -6,6 +6,7 @@
 #include <Functions/ModFunction.hpp>
 
 #include "AppCheckResponder.hpp"
+#include "CreateResponseException.hpp"
 
 class ModAppCheckResponder final : public AppCheckResponder {
 public:
@@ -15,12 +16,12 @@ public:
         auto [_, ec] = std::from_chars(text.data(), text.data() + text.size(), requestNum);
 
         if (ec != std::errc())
-            throw std::exception();
+            throw CreateResponseException("Can't convert message body to number!");
 
         uint64_t responseNum = CheckFunctions::modFunction(requestNum);
         Message_t message = {
             .header = {
-                .typeOption = BasicMessageType::CHECK_APP,
+                .typeOption = ConnectionMessageType::CHECK_APP,
                 .size = sizeof(responseNum)
             },
             .data = std::vector<uint8_t>(sizeof(responseNum))

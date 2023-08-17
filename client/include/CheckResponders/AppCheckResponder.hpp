@@ -1,11 +1,11 @@
 #pragma once
 
 #include <Messages/Message.hpp>
-#include <Messages/Types/BasicMessageType.hpp>
+#include <Messages/Types/ConnectionMessageType.hpp>
 
 class AppCheckResponder {
 public:
-    using Message_t = Message<BasicMessageType>;
+    using Message_t = Message<ConnectionMessageType>;
 
 public:
     virtual ~AppCheckResponder() = default;
