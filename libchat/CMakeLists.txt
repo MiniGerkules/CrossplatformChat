@@ -5,7 +5,10 @@ set(SOURCES
     ./src/phony.cpp
 )
 set(HEADERS
-    ./include/Exceptions.hpp
+    ./include/Consts.hpp
+
+    ./include/BaseException.hpp
+
     ./include/TSQueue.hpp
 
     ./include/Connection/Connection.hpp
@@ -14,6 +17,8 @@ set(HEADERS
 
     ./include/Connection/Delegates/ConnectionDelegate.hpp
     ./include/Connection/Delegates/ConnectionManagerDelegate.hpp
+
+    ./include/Functions/ModFunction.hpp
 
     ./include/Logger/Logger.hpp
     ./include/Logger/ConsoleLogger.hpp
@@ -24,17 +29,27 @@ set(HEADERS
 
     ./include/Messages/Handlers/MessageHandler.hpp
     ./include/Messages/Handlers/BasicMessageHandler.hpp
+    ./include/Messages/Handlers/RegularMessageHandler.hpp
+    ./include/Messages/Handlers/ConnectionMessageHandler.hpp
+
+    ./include/Messages/Handlers/Delegates/BasicMessageHandlerDelegate.hpp
+    ./include/Messages/Handlers/Delegates/RegularMessageHandlerDelegate.hpp
+    ./include/Messages/Handlers/Delegates/ConnectionMessageHandlerDelegate.hpp
 
     ./include/Messages/Types/BasicMessageType.hpp
     ./include/Messages/Types/RegularMessageType.hpp
-    ./include/Messages/Types/MessageTypesGeneralFuncs.hpp
+    ./include/Messages/Types/RegularMessageType.hpp
 
-    ./include/TextHandlerDelegate.hpp
+    ./include/Messages/Types/MessageTypesFuncs.hpp
+    ./include/Messages/Types/DescriptionException.hpp
 )
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES} ${HEADERS})
-
 target_include_directories(${PROJECT_NAME} PRIVATE include)
 
 set_compile_options_to(${PROJECT_NAME})
 add_boost_to(${PROJECT_NAME})
+
+if (${BUILD_TESTS})
+    add_subdirectory(tests)
+endif()
