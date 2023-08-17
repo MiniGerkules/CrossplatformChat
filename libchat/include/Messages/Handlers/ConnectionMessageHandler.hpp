@@ -9,6 +9,13 @@ class ConnectionMessageHandler : public MessageHandler {
 public:
     std::weak_ptr<ConnectionMessageHandlerDelegate> delegate;
 
+//MARK: - Static functions
+public:
+    static bool isCheckApp(const UniversalMessage &message) {
+        return MessageType::isMessageType<ConnectionMessageType>(message) &&
+        message.header.typeOption == static_cast<uint8_t>(ConnectionMessageType::CHECK_APP);
+    }
+
 //MARK: - Overrides methods of MessageHandler interface
 public:
     bool handle(const UniversalMessage &message) override {
