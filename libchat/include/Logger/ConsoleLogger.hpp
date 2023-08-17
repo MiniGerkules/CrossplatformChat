@@ -7,7 +7,7 @@
 
 class ConsoleLogger final : public Logger {
 private:
-    static std::mutex outputMutex_;
+    inline static std::mutex outputMutex_;
 
 public:
     void log(const char* message, const LoggerMessageType type) override {
