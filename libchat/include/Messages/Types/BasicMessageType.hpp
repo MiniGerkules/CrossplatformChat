@@ -6,7 +6,6 @@
 #include "MessageTypesFuncs.hpp"
 
 enum class BasicMessageType : uint8_t {
-    CHECK_APP,
     HEARTBEAT,
     ERROR
 };
