@@ -38,7 +38,7 @@ set(HEADERS
 
     ./include/Messages/Types/BasicMessageType.hpp
     ./include/Messages/Types/RegularMessageType.hpp
-    ./include/Messages/Types/RegularMessageType.hpp
+    ./include/Messages/Types/ConnectionMessageType.hpp
 
     ./include/Messages/Types/MessageTypesFuncs.hpp
     ./include/Messages/Types/DescriptionException.hpp
