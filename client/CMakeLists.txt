@@ -17,6 +17,7 @@ set(HEADERS
 
     ./include/CheckResponders/AppCheckResponder.hpp
     ./include/CheckResponders/ModAppCheckResponder.hpp
+    ./include/CheckResponders/CreateResponseException.hpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
