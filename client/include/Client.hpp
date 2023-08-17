@@ -3,6 +3,9 @@
 #include <functional>
 
 #include <Messages/Types/RegularMessageType.hpp>
+#include <Messages/Types/ConnectionMessageType.hpp>
+
+#include <Messages/Handlers/ConnectionMessageHandler.hpp>
 
 #include <Logger/Logger.hpp>
 #include <Connection/ConnectionManager.hpp>
@@ -94,8 +97,8 @@ public:
         auto message = manager.read();
         if (!message.has_value()) return;
 
-        if (BasicMessageHandler::isCheckApp(message.value())) {
-            logIfCan_("Got second check response from server.", LoggerMessageType::ERROR);
+        if (MessageType::isMessageType<ConnectionMessageType>(message.value())) {
+            logIfCan_("Got connection message from server.", LoggerMessageType::ERROR);
             strangeServer();
         } else if (BasicMessageHandler::isError(message.value())) {
             logIfCan_("Got error from server:", LoggerMessageType::ERROR);
@@ -155,14 +158,16 @@ public:
     }
 
     void stop() {
-        Message<RegularMessageType> message = {
-            .header = {
-                .typeOption = RegularMessageType::DISCONNECTED,
-                .size = 0
+        auto message = MessageType::convertToUniversal(
+            Message<ConnectionMessageType> {
+                .header = {
+                    .typeOption = ConnectionMessageType::DISCONNECT,
+                    .size = 0
+                }
             }
-        };
+        );
 
-        connection_.send(MessageType::convertToUniversal(std::move(message)));
+        connection_.send(std::move(message));
         connection_.stopSendingHeartbeat();
 
         displayer_->display("Client is being stopped.");
@@ -183,8 +188,8 @@ private:
         auto message = manager.read();
         if (!message.has_value()) return;
 
-        if (BasicMessageHandler::isCheckApp(message.value())) {
-            auto request = MessageType::convertToTyped<BasicMessageType>(std::move(message.value()));
+        if (ConnectionMessageHandler::isCheckApp(message.value())) {
+            auto request = MessageType::convertToTyped<ConnectionMessageType>(std::move(message.value()));
             auto response = checkResponder_->createResponse(request.value());
             auto universalResponse = MessageType::convertToUniversal(std::move(response));
 
