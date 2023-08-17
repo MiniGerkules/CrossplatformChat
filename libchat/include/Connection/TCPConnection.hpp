@@ -88,9 +88,12 @@ private:
             co_await async_write(socket_,
                                  buffer(&message.header, sizeof(message.header)),
                                  use_awaitable);
-            co_await async_write(socket_,
-                                 buffer(message.data),
-                                 use_awaitable);
+            
+            if (message.header.size > 0) {
+                co_await async_write(socket_,
+                                     buffer(message.data),
+                                     use_awaitable);
+            }
         } catch (const std::exception &error) {
             lostConnection_(error.what());
         }
