@@ -39,7 +39,7 @@ public:
         auto msg = connection_->read();
         if (!msg.has_value()) return;
 
-        if (!BasicMessageHandler::isHeartbeat(msg.value())) {
+        if (!BasicMessageHandler::isHeartbeat(msg.value().header)) {
             inMessages_.push(std::move(msg.value()));
 
             if (auto delegatePtr = delegate.lock()) {

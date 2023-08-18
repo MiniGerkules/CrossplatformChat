@@ -100,7 +100,7 @@ public:
         if (MessageType::isMessageType<ConnectionMessageType>(message.value())) {
             logIfCan_("Got connection message from server.", LoggerMessageType::ERROR);
             strangeServer();
-        } else if (BasicMessageHandler::isError(message.value())) {
+        } else if (BasicMessageHandler::isError(message.value().header)) {
             logIfCan_("Got error from server:", LoggerMessageType::ERROR);
             logIfCan_(message.value(), LoggerMessageType::ERROR);
             displayer_->display(message.value());
@@ -188,7 +188,7 @@ private:
         auto message = manager.read();
         if (!message.has_value()) return;
 
-        if (ConnectionMessageHandler::isCheckApp(message.value())) {
+        if (ConnectionMessageHandler::isCheckApp(message.value().header)) {
             auto request = MessageType::convertToTyped<ConnectionMessageType>(std::move(message.value()));
             auto response = checkResponder_->createResponse(request.value());
             auto universalResponse = MessageType::convertToUniversal(std::move(response));

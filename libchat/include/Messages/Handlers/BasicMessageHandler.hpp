@@ -12,14 +12,14 @@ public:
 
 //MARK: - Static functions
 public:
-    static bool isHeartbeat(const UniversalMessage &message) {
-        return MessageType::isMessageType<BasicMessageType>(message) &&
-        message.header.typeOption == static_cast<uint8_t>(BasicMessageType::HEARTBEAT);
+    static bool isHeartbeat(const UniversalMessageHeader &header) {
+        return MessageType::isMessageType<BasicMessageType>(header) &&
+               header.typeOption == static_cast<uint8_t>(BasicMessageType::HEARTBEAT);
     }
 
-    static bool isError(const UniversalMessage &message) {
-        return MessageType::isMessageType<BasicMessageType>(message) &&
-        message.header.typeOption == static_cast<uint8_t>(BasicMessageType::ERROR);
+    static bool isError(const UniversalMessageHeader &header) {
+        return MessageType::isMessageType<BasicMessageType>(header) &&
+               header.typeOption == static_cast<uint8_t>(BasicMessageType::ERROR);
     }
 
 //MARK: - Overrides methods of MessageHandler interface
