@@ -7,6 +7,8 @@ set(SOURCES
 set(HEADERS
     ./include/Client.hpp
 
+    ./include/WrongMessageException.hpp
+
     ./include/Displayer/Displayer.hpp
     ./include/Displayer/ConsoleDisplayer.hpp
     ./include/Displayer/DisplayerException.hpp
