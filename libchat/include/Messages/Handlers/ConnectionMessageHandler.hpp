@@ -11,6 +11,16 @@ public:
 
 //MARK: - Static functions
 public:
+    static bool isConnect(const UniversalMessage &message) {
+        return MessageType::isMessageType<ConnectionMessageType>(message) &&
+        message.header.typeOption == static_cast<uint8_t>(ConnectionMessageType::CONNECT);
+    }
+
+    static bool isDisconnect(const UniversalMessage &message) {
+        return MessageType::isMessageType<ConnectionMessageType>(message) &&
+        message.header.typeOption == static_cast<uint8_t>(ConnectionMessageType::DISCONNECT);
+    }
+
     static bool isCheckApp(const UniversalMessage &message) {
         return MessageType::isMessageType<ConnectionMessageType>(message) &&
         message.header.typeOption == static_cast<uint8_t>(ConnectionMessageType::CHECK_APP);
