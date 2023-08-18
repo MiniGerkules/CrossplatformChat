@@ -4,7 +4,7 @@
 
 namespace ChatConsts {
 
-constexpr uint16_t broadcastPort = 50'000;
-constexpr uint16_t connectPort = 60'000;
+constexpr uint16_t getIPPort = 50'000;
+constexpr uint16_t mainPort = 60'000;
 
 } // ChatConsts
