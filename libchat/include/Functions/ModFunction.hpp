@@ -1,10 +1,10 @@
 #pragma once
 
-#include <cstdint>
+#include "Consts.hpp"
 
 namespace CheckFunctions {
 
-uint64_t modFunction(const uint64_t x) {
+ChatConsts::NumCheckType modFunction(const ChatConsts::NumCheckType x) {
     return ((x << 5) ^ 0xF0F0F0A0A0F0F0F0ull) % 13799;
 }
 

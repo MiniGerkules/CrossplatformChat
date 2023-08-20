@@ -2,6 +2,7 @@
 
 #include <random>
 
+#include <Consts.hpp>
 #include <VectorExtensions.hpp>
 
 #include "AppCheckCreater.hpp"
@@ -12,7 +13,7 @@ public:
         std::random_device dev;
         std::mt19937_64 random(dev());
 
-        auto generatedNum = static_cast<uint64_t>(random());
+        auto generatedNum = static_cast<ChatConsts::NumCheckType>(random());
         auto message = Message<ConnectionMessageType> {
             .header = {
                 .typeOption = ConnectionMessageType::CHECK_APP,
