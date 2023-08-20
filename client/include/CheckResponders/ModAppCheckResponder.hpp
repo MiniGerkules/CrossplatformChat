@@ -2,6 +2,8 @@
 
 #include <charconv>
 
+#include <VectorExtensions.hpp>
+
 #include <Messages/Types/MessageTypesFuncs.hpp>
 #include <Functions/ModFunction.hpp>
 
@@ -18,16 +20,14 @@ public:
         if (ec != std::errc())
             throw CreateResponseException("Can't convert message body to number!");
 
-        uint64_t responseNum = CheckFunctions::modFunction(requestNum);
+        auto responseNum = CheckFunctions::modFunction(requestNum);
         Message_t message = {
             .header = {
                 .typeOption = ConnectionMessageType::CHECK_APP,
                 .size = sizeof(responseNum)
             },
-            .data = std::vector<uint8_t>(sizeof(responseNum))
+            .data = VectorExtensions::convertToVector(responseNum)
         };
-
-        std::memcpy(message.data.data(), &responseNum, sizeof(responseNum));
 
         return message;
     }

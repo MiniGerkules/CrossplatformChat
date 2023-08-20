@@ -2,6 +2,8 @@
 
 #include <functional>
 
+#include <VectorExtensions.hpp>
+
 #include <Messages/Types/RegularMessageType.hpp>
 #include <Messages/Types/ConnectionMessageType.hpp>
 
@@ -116,7 +118,7 @@ public:
         auto input = reader_->read();
         if (!input.has_value()) return;
 
-        auto data = convertToVector_(input.value());
+        auto data = VectorExtensions::convertToVector(input.value());
         Message<RegularMessageType> message = {
             .header = {
                 .typeOption = RegularMessageType::TEXT_MESSAGE,
@@ -224,13 +226,6 @@ private:
             auto text = MessageType::getTextFrom(message);
             loggerPtr->log(text.data(), type);
         }
-    }
-
-    std::vector<uint8_t> convertToVector_(const std::string &str) {
-        auto vector = std::vector<uint8_t>(str.length() + 1);
-        std::memcpy(vector.data(), str.c_str(), str.length() + 1);
-
-        return vector;
     }
 
     void strangeServer() {
