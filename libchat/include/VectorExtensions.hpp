@@ -24,4 +24,13 @@ std::vector<uint8_t> convertToVector(const T &value) {
     return vector;
 }
 
+template <typename T>
+T convertToType(const std::vector<uint8_t> &vector) {
+    static_assert(std::is_standard_layout<T>::value, "Type is too complex!");
+
+    T value = *reinterpret_cast<T *>(vector.data());
+
+    return value;
+}
+
 }
