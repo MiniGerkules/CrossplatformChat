@@ -2,9 +2,9 @@
 
 #include <Messages/UniversalMessage.hpp>
 
-class ServerDelegate {
+class ClientManagerDelegate {
 public:
-    virtual ~ServerDelegate() = default;
+    virtual ~ClientManagerDelegate() = default;
 
     virtual void messageFromClient(UniversalMessage message) = 0;
 };
