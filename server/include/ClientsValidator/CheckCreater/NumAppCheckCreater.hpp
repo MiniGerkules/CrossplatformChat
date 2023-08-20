@@ -7,7 +7,7 @@
 
 #include "AppCheckCreater.hpp"
 
-class NumAppCheckCreater : public AppCheckCreater {
+class NumAppCheckCreater final : public AppCheckCreater {
 public:
     Message<ConnectionMessageType> createCheck() override {
         std::random_device dev;

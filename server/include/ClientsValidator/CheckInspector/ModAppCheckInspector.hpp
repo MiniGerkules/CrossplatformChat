@@ -5,7 +5,7 @@
 
 #include "AppCheckInspector.hpp"
 
-class ModAppCheckInspector : AppCheckInspector {
+class ModAppCheckInspector final : AppCheckInspector {
 public:
     bool isCompatibleApp(const Message<ConnectionMessageType>& check,
                          const Message<ConnectionMessageType>& respond) {
