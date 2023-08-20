@@ -104,8 +104,6 @@ public:
             logIfCan_("Got error from server:", LoggerMessageType::ERROR);
             logIfCan_(message.value(), LoggerMessageType::ERROR);
             displayer_->display(message.value());
-
-            stop();
         } else {
             logIfCan_("Got usual message.", LoggerMessageType::INFO);
             displayer_->display(message.value());
