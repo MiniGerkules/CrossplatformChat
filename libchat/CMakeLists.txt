@@ -11,6 +11,8 @@ set(HEADERS
 
     ./include/TSQueue.hpp
 
+    ./include/VectorExtensions.hpp
+
     ./include/Connection/Connection.hpp
     ./include/Connection/TCPConnection.hpp
     ./include/Connection/ConnectionManager.hpp
