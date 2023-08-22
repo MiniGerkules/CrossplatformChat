@@ -10,8 +10,8 @@ class ClientsManagerDelegate {
 public:
     virtual ~ClientsManagerDelegate() = default;
 
-    virtual void messageFromClient(std::shared_ptr<ConnectionManager> client,
+    virtual void messageFromClient(std::shared_ptr<ConnectionManager> manager,
                                    UniversalMessage message) = 0;
-    virtual void clientIsDisconnected(std::shared_ptr<ConnectionManager> client,
-                                      std::string_view reason) = 0
+    virtual void clientIsDisconnected(std::shared_ptr<ConnectionManager> manager,
+                                      std::string_view reason) = 0;
 };
