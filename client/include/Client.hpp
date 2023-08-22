@@ -57,6 +57,10 @@ private:
         void ifDataAvailable() override { nameReader_(); }
     };
 
+//MARK: - Public fields
+public:
+    std::weak_ptr<Logger> logger;
+
 //MARK: - Private fields
 private:
     std::string name_;
@@ -79,10 +83,6 @@ private:
     std::unique_ptr<Displayer> displayer_;
 
     std::unique_ptr<AppCheckResponder> checkResponder_;
-
-//MARK: - Public fields
-public:
-    std::weak_ptr<Logger> logger;
 
 //MARK: - Overrides methods of ConnectionManagerDelegate interface
 public:
