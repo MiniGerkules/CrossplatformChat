@@ -128,7 +128,7 @@ public:
         };
 
         logIfCan_("Read input from user. Send message.", LoggerMessageType::INFO);
-        connection_.send(MessageType::convertToUniversal(std::move(message)));
+        connection_.send(std::move(message));
     }
 
 //MARK: - Constructor and public methods
@@ -158,14 +158,12 @@ public:
     }
 
     void stop() {
-        auto message = MessageType::convertToUniversal(
-            Message<ConnectionMessageType> {
+        auto message = Message<ConnectionMessageType> {
                 .header = {
                     .typeOption = ConnectionMessageType::DISCONNECT,
                     .size = 0
                 }
-            }
-        );
+        };
 
         connection_.send(std::move(message));
         connection_.stopSendingHeartbeat();
@@ -191,10 +189,9 @@ private:
         if (ConnectionMessageHandler::isCheckApp(message.value().header)) {
             auto request = MessageType::convertToTyped<ConnectionMessageType>(std::move(message.value()));
             auto response = checkResponder_->createResponse(request.value());
-            auto universalResponse = MessageType::convertToUniversal(std::move(response));
 
             logIfCan_("Got check request. Send response.", LoggerMessageType::INFO);
-            connection_.send(universalResponse);
+            connection_.send(std::move(response));
 
             // Change to the normal connection delegate
             connection_.delegate = this->weak_from_this();
