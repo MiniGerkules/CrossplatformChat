@@ -8,6 +8,8 @@
 #include "TSQueue.hpp"
 #include "Messages/Handlers/BasicMessageHandler.hpp"
 
+#include "Messages/Types/MessageTypesFuncs.hpp"
+
 #include "Connection.hpp"
 #include "Delegates/ConnectionManagerDelegate.hpp"
 #include "Exceptions/ConnectionException.hpp"
@@ -69,6 +71,11 @@ public:
 
     void send(UniversalMessage message) noexcept {
         connection_->send(std::move(message));
+    }
+
+    template <typename IDType>
+    void send(Message<IDType> message) noexcept {
+        connection_->send(MessageType::convertToUniversal(std::move(message)));
     }
 
     void close() noexcept {
