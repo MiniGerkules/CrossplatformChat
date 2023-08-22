@@ -27,7 +27,7 @@ private:
     boost::posix_time::millisec period_{ 1'000 };
     std::atomic<bool> isSendingHeartbeat_ = false;
 
-    //MARK: - Overrides methods of ConnectionDelegate interface
+//MARK: - Overrides methods of ConnectionDelegate interface
 public:
     void ifLostConnection(const std::string_view errorMessage) override {
         if (auto delegatePtr = delegate.lock()) {
@@ -50,7 +50,7 @@ public:
         }
     }
 
-    //MARK: - Constructor and methods
+//MARK: - Constructor and methods
 public:
     ConnectionManager(std::unique_ptr<Connection> connection)
             : connection_{ std::move(connection) } {
