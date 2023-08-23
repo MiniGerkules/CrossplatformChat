@@ -38,7 +38,7 @@ private:
         }
 
         void ifLostConnection(ConnectionManager &manager,
-                              const std::string_view errorMsg) override {
+                              std::string_view errorMsg) override {
             lostConnection_(manager, errorMsg);
         }
 
@@ -86,8 +86,7 @@ private:
 
 //MARK: - Overrides methods of ConnectionManagerDelegate interface
 public:
-    void ifLostConnection(ConnectionManager &manager,
-                          const std::string_view errorMsg) override {
+    void ifLostConnection(ConnectionManager &manager, std::string_view errorMsg) override {
         logIfCan_(errorMsg.data(), LoggerMessageType::ERROR);
         displayer_->display(errorMsg);
 

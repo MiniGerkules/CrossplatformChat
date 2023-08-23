@@ -25,8 +25,7 @@ private:
 
 //MARK: - Overrides methods of ConnectionManagerDelegate interface
 public:
-    void ifLostConnection(ConnectionManager &manager,
-                          const std::string_view errorMsg) override {
+    void ifLostConnection(ConnectionManager &manager, std::string_view errorMsg) override {
         auto managerPtr = manager.shared_from_this();
         clientIsNotVerified_(managerPtr, errorMsg);
 
