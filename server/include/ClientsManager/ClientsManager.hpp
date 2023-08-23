@@ -44,8 +44,6 @@ public:
                                    "even though the client is already connected "
                                    "and verified."sv);
             }
-
-            menagerPtr->close();
         } else {
             delegate.callIfCan(&ClientsManagerDelegate::messageFromClient,
                                menagerPtr, message.value());
