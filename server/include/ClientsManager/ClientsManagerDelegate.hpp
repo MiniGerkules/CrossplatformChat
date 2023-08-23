@@ -14,4 +14,6 @@ public:
                                    UniversalMessage message) = 0;
     virtual void clientIsDisconnected(std::shared_ptr<ConnectionManager> manager,
                                       std::string_view reason) = 0;
+    virtual void clientIsStrange(std::shared_ptr<ConnectionManager> manager,
+                                 std::string_view reason) = 0;
 };
