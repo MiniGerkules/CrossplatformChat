@@ -15,7 +15,7 @@ class ClientsValidator final : public ConnectionManagerDelegate,
     using Check_t_ = Message<ConnectionMessageType>;
 
 public:
-    std::weak_ptr<ClientsValidatorDelegate> delegate;
+    Delegate<ClientsValidatorDelegate> delegate{ {} };
 
 private:
     std::unordered_map<Connection_t_, std::optional<Check_t_>> clients_;
@@ -27,7 +27,8 @@ private:
 public:
     void ifLostConnection(ConnectionManager &manager, std::string_view errorMsg) override {
         auto managerPtr = manager.shared_from_this();
-        clientIsNotVerified_(managerPtr, errorMsg);
+        delegate.callIfCan(&ClientsValidatorDelegate::clientIsNotVerified,
+                           managerPtr, errorMsg);
 
         managerPtr->close();
         clients_.erase(managerPtr);
@@ -38,28 +39,11 @@ public:
         auto message = managerPtr->read();
         if (!message.has_value()) return;
 
-        if (ConnectionMessageHandler::isConnect(message.value().header)) {
-            if (clients_[managerPtr].has_value()) goto STRANGE_CLIENT;
+        auto connect = MessageType::convertToTyped<ConnectionMessageType>(message.value());
+        if (!connect.has_value()) goto STRANGE_CLIENT;
 
-            auto check = checkCreater_->createCheck();
-            managerPtr->send(check);
-            clients_[managerPtr] = std::move(check);
-        } else if (ConnectionMessageHandler::isCheckApp(message.value().header)) {
-            if (!clients_[managerPtr].has_value()) goto STRANGE_CLIENT;
-
-            auto check = MessageType::convertToTyped<ConnectionMessageType>(message.value());
-            if (checkInspector_->isCompatibleApp(clients_[managerPtr].value(), check.value())) {
-                clientIsVerified_(managerPtr);
-            } else {
-                clientIsNotVerified_(managerPtr, "The check failed.");
-            }
-
-            clients_.erase(managerPtr);
-        } else {
-            goto STRANGE_CLIENT;
-        }
-
-        return;
+        // If everything is fine, go out
+        if (handleConnectionMessage_(managerPtr, connect.value())) return;
 
     STRANGE_CLIENT:
         strangeClient(managerPtr);
@@ -73,22 +57,42 @@ public:
 
 public:
     void strangeClient(Connection_t_ manager) {
+        using namespace std::literals;
+
         manager->close();
         clients_.erase(manager);
 
-        clientIsNotVerified_(manager, "Client behaviour is strange. Close connection.");
+        delegate.callIfCan(&ClientsValidatorDelegate::clientIsNotVerified, manager,
+                           "Client behaviour is strange. Close connection."sv);
     }
 
 private:
-    void clientIsVerified_(Connection_t_ manager) {
-        if (auto delegatePtr = delegate.lock()) {
-            delegatePtr->clientIsVerified(manager);
-        }
-    }
+    bool handleConnectionMessage_(Connection_t_ manager, Message<ConnectionMessageType> message) {
+        using namespace std::literals;
 
-    void clientIsNotVerified_(Connection_t_ manager, std::string_view errorMsg) {
-        if (auto delegatePtr = delegate.lock()) {
-            delegatePtr->clientIsNotVerified(manager, errorMsg);
+        switch (message.header.typeOption) {
+            case ConnectionMessageType::CONNECT: {
+                if (clients_[manager].has_value()) return false;
+
+                auto check = checkCreater_->createCheck();
+                manager->send(check);
+                clients_[manager] = std::move(check);
+                return true;
+            }
+            case ConnectionMessageType::CHECK_APP:
+                if (!clients_[manager].has_value()) return false;
+
+                if (checkInspector_->isCompatibleApp(clients_[manager].value(), message)) {
+                    delegate.callIfCan(&ClientsValidatorDelegate::clientIsVerified, manager);
+                } else {
+                    delegate.callIfCan(&ClientsValidatorDelegate::clientIsNotVerified,
+                                       manager, "The check failed."sv);
+                }
+
+                clients_.erase(manager);
+                return true;
+            default:
+                return false;
         }
     }
 };
