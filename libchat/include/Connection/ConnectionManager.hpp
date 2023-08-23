@@ -79,6 +79,7 @@ public:
     }
 
     void close() noexcept {
+        stopSendingHeartbeat();
         connection_->close();
     }
 
