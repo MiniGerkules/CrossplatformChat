@@ -28,11 +28,10 @@ public:
     void ifLostConnection(ConnectionManager &manager,
                           const std::string_view errorMsg) override {
         auto managerPtr = manager.shared_from_this();
-
-        clients_.erase(managerPtr);
-        managerPtr->close();
-
         clientIsNotVerified_(managerPtr, errorMsg);
+
+        managerPtr->close();
+        clients_.erase(managerPtr);
     }
 
     void ifDataIsAvailable(ConnectionManager &manager) override {
