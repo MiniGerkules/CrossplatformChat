@@ -37,6 +37,9 @@ public:
                 case BasicMessageType::ERROR:
                     delegatePtr->messageIsError(MessageType::getTextFrom(message));
                     break;
+                case BasicMessageType::STRANGE_BEHAVIOUR:
+                    delegatePtr->messageAboutStrangeBehaviour(MessageType::getTextFrom(message));
+                    break;
             }
         }
 

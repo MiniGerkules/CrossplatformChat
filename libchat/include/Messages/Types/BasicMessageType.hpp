@@ -7,7 +7,8 @@
 
 enum class BasicMessageType : uint8_t {
     HEARTBEAT,
-    ERROR
+    ERROR,
+    STRANGE_BEHAVIOUR
 };
 
 namespace MessageType {
