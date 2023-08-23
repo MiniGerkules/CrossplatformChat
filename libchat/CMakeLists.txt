@@ -5,12 +5,10 @@ set(SOURCES
     ./src/phony.cpp
 )
 set(HEADERS
-    ./include/Consts.hpp
-
     ./include/BaseException.hpp
-
+    ./include/Consts.hpp
+    ./include/Delegate.hpp
     ./include/TSQueue.hpp
-
     ./include/VectorExtensions.hpp
 
     ./include/Connection/Connection.hpp
