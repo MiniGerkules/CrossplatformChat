@@ -9,6 +9,13 @@ class RegularMessageHandler : public MessageHandler {
 public:
     std::weak_ptr<RegularMessageHandlerDelegate> delegate;
 
+//MARK: - Static functions
+public:
+    static bool isSetName(const UniversalMessageHeader &header) {
+        return MessageType::isMessageType<RegularMessageType>(header) &&
+               header.typeOption == static_cast<uint8_t>(RegularMessageType::SET_NAME);
+    }
+
 //MARK: - Overrides methods of MessageHandler interface
 public:
     bool handle(const UniversalMessage &message) override {
