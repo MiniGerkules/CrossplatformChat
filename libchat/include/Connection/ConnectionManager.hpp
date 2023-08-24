@@ -5,7 +5,7 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/asio.hpp>
 
-#include "TSQueue.hpp"
+#include "ThreadSafe/TSQueue.hpp"
 #include "Messages/Handlers/BasicMessageHandler.hpp"
 
 #include "Messages/Types/MessageTypesFuncs.hpp"

@@ -2,7 +2,7 @@
 
 #include <boost/asio.hpp>
 
-#include <TSQueue.hpp>
+#include <ThreadSafe/TSQueue.hpp>
 
 #include "Reader.hpp"
 

@@ -4,7 +4,7 @@
 #include <boost/array.hpp>
 #include <boost/lockfree/queue.hpp>
 
-#include "TSQueue.hpp"
+#include "ThreadSafe/TSQueue.hpp"
 
 #include "Connection.hpp"
 
