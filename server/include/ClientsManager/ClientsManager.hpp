@@ -1,20 +1,25 @@
 #pragma once
 
 #include <memory>
-#include <unordered_set>
+#include <unordered_map>
 
 #include <Delegate.hpp>
 #include <Connection/Delegates/ConnectionManagerDelegate.hpp>
+
+#include <Messages/Handlers/RegularMessageHandler.hpp>
 
 #include "ClientsManagerDelegate.hpp"
 
 class ClientsManager : public ConnectionManagerDelegate,
                        public std::enable_shared_from_this<ClientsManager> {
+    using Connection_t_ = std::shared_ptr<ConnectionManager>;
+
 public:
     Delegate<ClientsManagerDelegate> delegate{ {} };
 
 private:
-    std::unordered_set<std::shared_ptr<ConnectionManager>> clients_;
+    size_t lastID_ = 0; // Don't need to be atomic -- it's always defended by mutex
+    std::unordered_map<Connection_t_, std::pair<const size_t, std::string>> clients_;
 
 //MARK: - Overrides methods of ConnectionManagerDelegate interface
 public:
@@ -29,24 +34,29 @@ public:
     void ifDataIsAvailable(ConnectionManager &manager) override {
         using namespace std::literals;
 
-        auto menagerPtr = manager.shared_from_this();
-        auto message = menagerPtr->read();
+        auto managerPtr = manager.shared_from_this();
+        auto message = managerPtr->read();
         if (!message.has_value()) return;
 
         auto connectMsg = MessageType::convertToTyped<ConnectionMessageType>(message.value());
         if (connectMsg.has_value()) {
             if (connectMsg.value().header.typeOption == ConnectionMessageType::DISCONNECT) {
                 delegate.callIfCan(&ClientsManagerDelegate::clientIsDisconnected,
-                                   menagerPtr, "Client is disconnected."sv);
+                                   managerPtr, "Client is disconnected."sv);
             } else {
                 delegate.callIfCan(&ClientsManagerDelegate::clientIsStrange,
-                                   menagerPtr, "Connection message was received "
+                                   managerPtr, "Connection message was received "
                                    "even though the client is already connected "
                                    "and verified."sv);
             }
         } else {
-            delegate.callIfCan(&ClientsManagerDelegate::messageFromClient,
-                               menagerPtr, message.value());
+            if (RegularMessageHandler::isSetName(message.value().header)) {
+                auto name = MessageType::getTextFrom(message.value());
+                clients_[managerPtr].second = name;
+            } else {
+                delegate.callIfCan(&ClientsManagerDelegate::messageFromClient,
+                                   managerPtr, message.value());
+            }
         }
     }
 
@@ -54,14 +64,18 @@ public:
 public:
     void addClient(std::shared_ptr<ConnectionManager> newClient) {
         newClient->delegate = weak_from_this();
-        clients_.insert(newClient);
+        clients_.insert({ newClient, { lastID_++, "" } });
     }
 
     void closeAllConnections() {
-        for (auto &client : clients_) {
+        for (auto &[client, _] : clients_) {
             client->close();
         }
 
         clients_.clear();
+    }
+
+    std::string getNameOf(std::shared_ptr<ConnectionManager> client) {
+        return clients_[client].second;
     }
 };
