@@ -1,6 +1,6 @@
 #pragma once
 
-#include <unordered_map>
+#include <ThreadSafe/TSUnorderedMap.hpp>
 
 #include <Messages/Handlers/ConnectionMessageHandler.hpp>
 
@@ -18,7 +18,7 @@ public:
     Delegate<ClientsValidatorDelegate> delegate{ {} };
 
 private:
-    std::unordered_map<Connection_t_, std::optional<Check_t_>> clients_;
+    TSUnorderedMap<Connection_t_, std::optional<Check_t_>> clients_;
 
     std::unique_ptr<AppCheckCreater> checkCreater_;
     std::unique_ptr<AppCheckInspector> checkInspector_;

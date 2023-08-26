@@ -1,7 +1,8 @@
 #pragma once
 
 #include <memory>
-#include <unordered_map>
+
+#include <ThreadSafe/TSUnorderedMap.hpp>
 
 #include <Delegate.hpp>
 #include <Connection/Delegates/ConnectionManagerDelegate.hpp>
@@ -18,8 +19,8 @@ public:
     Delegate<ClientsManagerDelegate> delegate{ {} };
 
 private:
-    size_t lastID_ = 0; // Don't need to be atomic -- it's always defended by mutex
-    std::unordered_map<Connection_t_, std::pair<const size_t, std::string>> clients_;
+    std::atomic_size_t lastID_ = 0;
+    TSUnorderedMap<Connection_t_, std::pair<const size_t, std::string>> clients_;
 
 //MARK: - Overrides methods of ConnectionManagerDelegate interface
 public:
