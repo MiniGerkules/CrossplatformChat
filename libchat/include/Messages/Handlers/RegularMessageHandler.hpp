@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Delegate.hpp"
 #include "Messages/Types/RegularMessageType.hpp"
 
 #include "MessageHandler.hpp"
@@ -7,7 +8,7 @@
 
 class RegularMessageHandler : public MessageHandler {
 public:
-    std::weak_ptr<RegularMessageHandlerDelegate> delegate;
+    Delegate<RegularMessageHandlerDelegate> delegate;
 
 //MARK: - Static functions
 public:
@@ -23,15 +24,15 @@ public:
         if (!regular.has_value())
             return next_->handle(message);
 
-        if (auto delegatePtr = delegate.lock()) {
-            switch (regular.value().typeOption) {
-                case RegularMessageType::SET_NAME:
-                    delegatePtr->messageSetsName(MessageType::getTextFrom(message));
-                    break;
-                case RegularMessageType::TEXT_MESSAGE:
-                    delegatePtr->messageIsText(MessageType::getTextFrom(message));
-                    break;
-            }
+        switch (regular.value().typeOption) {
+            case RegularMessageType::SET_NAME:
+                delegate.callIfCan(&RegularMessageHandlerDelegate::messageSetsName,
+                                   MessageType::getTextFrom(message));
+                break;
+            case RegularMessageType::TEXT_MESSAGE:
+                delegate.callIfCan(&RegularMessageHandlerDelegate::messageIsText,
+                                   MessageType::getTextFrom(message));
+                break;
         }
 
         return true;

@@ -4,6 +4,7 @@
 #include <memory>
 #include <optional>
 
+#include "Delegate.hpp"
 #include "Messages/UniversalMessage.hpp"
 
 #include "Delegates/ConnectionDelegate.hpp"
@@ -11,7 +12,7 @@
 class Connection {
 public:
     std::atomic<bool> isAlive = false;
-    std::weak_ptr<ConnectionDelegate> delegate;
+    Delegate<ConnectionDelegate> delegate;
 
 public:
     virtual ~Connection() = default;

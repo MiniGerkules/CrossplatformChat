@@ -71,13 +71,14 @@ private:
                                         use_awaitable);
 
                     inMessages_.push(std::move(storage));
-                    dataAvailable_();
+                    delegate.callIfCan(&ConnectionDelegate::ifDataIsAvailable);
                 } catch (const std::bad_alloc &) {      // Ignore vector errors
                 } catch (const std::length_error &) {
                 }
             }
         } catch (const std::exception &error) {
-            lostConnection_(error.what());
+            delegate.callIfCan(&ConnectionDelegate::ifLostConnection,
+                               std::string_view(error.what()));
         }
     }
 
@@ -95,20 +96,8 @@ private:
                                      use_awaitable);
             }
         } catch (const std::exception &error) {
-            lostConnection_(error.what());
-        }
-    }
-
-private:
-    void lostConnection_(const std::string_view errorMsg) noexcept {
-        if (auto delegatePtr = delegate.lock()) {
-            delegatePtr->ifLostConnection(errorMsg);
-        }
-    }
-
-    void dataAvailable_() noexcept {
-        if (auto delegatePtr = delegate.lock()) {
-            delegatePtr->ifDataIsAvailable();
+            delegate.callIfCan(&ConnectionDelegate::ifLostConnection,
+                               std::string_view(error.what()));
         }
     }
 };

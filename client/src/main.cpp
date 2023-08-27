@@ -146,10 +146,10 @@ int main() {
         std::make_unique<ConsoleDisplayer>(),
         std::make_unique<ModAppCheckResponder>()
     };
-    client.logger = logger;
+    client.logger = Delegate<Logger>(logger);
 
     signal_set signals(ioContext, SIGINT, SIGTERM);
-    signals.async_wait([&](auto, auto) { client.stop(); });
+    signals.async_wait([&client](auto, auto) { client.stop(); });
 
     client.run();
 

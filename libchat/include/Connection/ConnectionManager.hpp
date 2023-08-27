@@ -5,6 +5,7 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/asio.hpp>
 
+#include "Delegate.hpp"
 #include "ThreadSafe/TSQueue.hpp"
 #include "Messages/Handlers/BasicMessageHandler.hpp"
 
@@ -17,7 +18,7 @@
 class ConnectionManager final : public ConnectionDelegate,
                                 public std::enable_shared_from_this<ConnectionManager> {
 public:
-    std::weak_ptr<ConnectionManagerDelegate> delegate;
+    Delegate<ConnectionManagerDelegate> delegate;
 
 private:
     std::unique_ptr<Connection> connection_;
@@ -30,9 +31,8 @@ private:
 //MARK: - Overrides methods of ConnectionDelegate interface
 public:
     void ifLostConnection(const std::string_view errorMessage) override {
-        if (auto delegatePtr = delegate.lock()) {
-            delegatePtr->ifLostConnection(*this, errorMessage);
-        }
+        delegate.callIfCan(&ConnectionManagerDelegate::ifLostConnection,
+                           shared_from_this(), errorMessage);
 
         connection_->close();
     }
@@ -44,9 +44,8 @@ public:
         if (!BasicMessageHandler::isHeartbeat(msg.value().header)) {
             inMessages_.push(std::move(msg.value()));
 
-            if (auto delegatePtr = delegate.lock()) {
-                delegatePtr->ifDataIsAvailable(*this);
-            }
+            delegate.callIfCan(&ConnectionManagerDelegate::ifDataIsAvailable,
+                               shared_from_this());
         }
     }
 
@@ -57,7 +56,7 @@ public:
         if (connection == nullptr)
             throw ConnectionException("The connection is unreachable!");
 
-        connection_->delegate = this->weak_from_this();
+        connection_->delegate = Delegate<ConnectionDelegate>(this->weak_from_this());
         connection_->open();
     }
 

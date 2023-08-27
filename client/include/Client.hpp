@@ -59,7 +59,7 @@ private:
 
 //MARK: - Public fields
 public:
-    std::weak_ptr<Logger> logger;
+    Delegate<Logger> logger;
 
 //MARK: - Private fields
 private:
@@ -140,8 +140,8 @@ public:
             : executor_{ executor }, connection_{ std::move(connection) },
               reader_{ std::move(reader) }, displayer_{ std::move(displayer) },
               checkResponder_{ std::move(checkResponder) } {
-        connection_.delegate = std::weak_ptr(requestGetter_);
-        reader_->delegate = std::weak_ptr(nameGetter_);
+        connection_.delegate = Delegate<ConnectionManagerDelegate>(requestGetter_);
+        reader_->delegate = Delegate<ReaderDelegate>(nameGetter_);
 
         logIfCan_("Started sending heartbeat.", LoggerMessageType::INFO);
         connection_.startSendingHeartbeat(executor);
@@ -193,7 +193,7 @@ private:
             connection_.send(std::move(response));
 
             // Change to the normal connection delegate
-            connection_.delegate = this->weak_from_this();
+            connection_.delegate = Delegate<ConnectionManagerDelegate>(this->weak_from_this());
         } else {
             logIfCan_("First of all, didn't get check request.", LoggerMessageType::ERROR);
             strangeServer();
@@ -207,21 +207,17 @@ private:
         name_ = std::move(name.value());
 
         // Change to the normal reader delegate
-        reader_->delegate = this->weak_from_this();
+        reader_->delegate = Delegate<ReaderDelegate>(this->weak_from_this());
     }
 
 //MARK: - Methods that make work more convenient
 private:
     void logIfCan_(const char *message, const LoggerMessageType type) {
-        if (auto loggerPtr = logger.lock())
-            loggerPtr->log(message, type);
+        logger.callIfCan(&Logger::log, message, type);
     }
 
     void logIfCan_(const UniversalMessage &message, const LoggerMessageType type) {
-        if (auto loggerPtr = logger.lock()) {
-            auto text = MessageType::getTextFrom(message);
-            loggerPtr->log(text.data(), type);
-        }
+        logIfCan_(MessageType::getTextFrom(message).data(), type);
     }
 
     void strangeServer() {

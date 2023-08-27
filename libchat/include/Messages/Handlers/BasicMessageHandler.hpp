@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Delegate.hpp"
+
 #include "Messages/Types/BasicMessageType.hpp"
 #include "Messages/Types/MessageTypesFuncs.hpp"
 
@@ -8,7 +10,7 @@
 
 class BasicMessageHandler : public MessageHandler {
 public:
-    std::weak_ptr<BasicMessageHandlerDelegate> delegate;
+    Delegate<BasicMessageHandlerDelegate> delegate;
 
 //MARK: - Static functions
 public:
@@ -29,18 +31,18 @@ public:
         if (!regular.has_value())
             return next_->handle(message);
 
-        if (auto delegatePtr = delegate.lock()) {
-            switch (regular.value().typeOption) {
-                case BasicMessageType::HEARTBEAT:
-                    delegatePtr->messageIsHeartbeat();
-                    break;
-                case BasicMessageType::ERROR:
-                    delegatePtr->messageIsError(MessageType::getTextFrom(message));
-                    break;
-                case BasicMessageType::STRANGE_BEHAVIOUR:
-                    delegatePtr->messageAboutStrangeBehaviour(MessageType::getTextFrom(message));
-                    break;
-            }
+        switch (regular.value().typeOption) {
+            case BasicMessageType::HEARTBEAT:
+                delegate.callIfCan(&BasicMessageHandlerDelegate::messageIsHeartbeat);
+                break;
+            case BasicMessageType::ERROR:
+                delegate.callIfCan(&BasicMessageHandlerDelegate::messageIsError,
+                                   MessageType::getTextFrom(message));
+                break;
+            case BasicMessageType::STRANGE_BEHAVIOUR:
+                delegate.callIfCan(&BasicMessageHandlerDelegate::messageAboutStrangeBehaviour,
+                                   MessageType::getTextFrom(message));
+                break;
         }
 
         return true;

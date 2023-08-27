@@ -1,13 +1,14 @@
 #pragma once
 
-#include <Messages/Types/ConnectionMessageType.hpp>
+#include "Delegate.hpp"
+#include "Messages/Types/ConnectionMessageType.hpp"
 
 #include "MessageHandler.hpp"
 #include "Delegates/ConnectionMessageHandlerDelegate.hpp"
 
 class ConnectionMessageHandler : public MessageHandler {
 public:
-    std::weak_ptr<ConnectionMessageHandlerDelegate> delegate;
+    Delegate<ConnectionMessageHandlerDelegate> delegate;
 
 //MARK: - Static functions
 public:
@@ -33,18 +34,16 @@ public:
         if (!regular.has_value())
             return next_->handle(message);
 
-        if (auto delegatePtr = delegate.lock()) {
-            switch (regular.value().typeOption) {
-                case ConnectionMessageType::CONNECT:
-                    delegatePtr->messageToConnect();
-                    break;
-                case ConnectionMessageType::DISCONNECT:
-                    delegatePtr->messageToDisconnect();
-                    break;
-                case ConnectionMessageType::CHECK_APP:
-                    delegatePtr->messageToCheckApp();
-                    break;
-            }
+        switch (regular.value().typeOption) {
+            case ConnectionMessageType::CONNECT:
+                delegate.callIfCan(&ConnectionMessageHandlerDelegate::messageToConnect);
+                break;
+            case ConnectionMessageType::DISCONNECT:
+                delegate.callIfCan(&ConnectionMessageHandlerDelegate::messageToDisconnect);
+                break;
+            case ConnectionMessageType::CHECK_APP:
+                delegate.callIfCan(&ConnectionMessageHandlerDelegate::messageToCheckApp);
+                break;
         }
 
         return true;

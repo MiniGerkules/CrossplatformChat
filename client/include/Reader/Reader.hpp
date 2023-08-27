@@ -3,13 +3,14 @@
 #include <memory>
 #include <optional>
 
+#include <Delegate.hpp>
 #include <Messages/UniversalMessage.hpp>
 
 #include "ReaderDelegate.hpp"
 
 class Reader {
 public:
-    std::weak_ptr<ReaderDelegate> delegate;
+    Delegate<ReaderDelegate> delegate;
 
 public:
     virtual ~Reader() = default;
