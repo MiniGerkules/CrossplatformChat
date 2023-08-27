@@ -24,39 +24,38 @@ private:
 
 //MARK: - Overrides methods of ConnectionManagerDelegate interface
 public:
-    void ifLostConnection(ConnectionManager &manager, std::string_view errorMsg) override {
-        auto managerPtr = manager.shared_from_this();
-        delegate.callIfCan(&ClientsManagerDelegate::clientIsDisconnected, managerPtr, errorMsg);
+    void ifLostConnection(std::shared_ptr<ConnectionManager> manager,
+                          std::string_view errorMsg) override {
+        delegate.callIfCan(&ClientsManagerDelegate::clientIsDisconnected, manager, errorMsg);
 
-        managerPtr->close();
-        clients_.erase(managerPtr);
+        manager->close();
+        clients_.erase(manager);
     }
 
-    void ifDataIsAvailable(ConnectionManager &manager) override {
+    void ifDataIsAvailable(std::shared_ptr<ConnectionManager> manager) override {
         using namespace std::literals;
 
-        auto managerPtr = manager.shared_from_this();
-        auto message = managerPtr->read();
+        auto message = manager->read();
         if (!message.has_value()) return;
 
         auto connectMsg = MessageType::convertToTyped<ConnectionMessageType>(message.value());
         if (connectMsg.has_value()) {
             if (connectMsg.value().header.typeOption == ConnectionMessageType::DISCONNECT) {
                 delegate.callIfCan(&ClientsManagerDelegate::clientIsDisconnected,
-                                   managerPtr, "Client is disconnected."sv);
+                                   manager, "Client is disconnected."sv);
             } else {
                 delegate.callIfCan(&ClientsManagerDelegate::clientIsStrange,
-                                   managerPtr, "Connection message was received "
+                                   manager, "Connection message was received "
                                    "even though the client is already connected "
                                    "and verified."sv);
             }
         } else {
             if (RegularMessageHandler::isSetName(message.value().header)) {
                 auto name = MessageType::getTextFrom(message.value());
-                clients_[managerPtr].second = name;
+                clients_[manager].second = name;
             } else {
                 delegate.callIfCan(&ClientsManagerDelegate::messageFromClient,
-                                   managerPtr, message.value());
+                                   manager, message.value());
             }
         }
     }

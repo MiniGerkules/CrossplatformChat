@@ -24,8 +24,9 @@ class Client final : public ConnectionManagerDelegate,
 private:
     class RequestGetter_ final : public ConnectionManagerDelegate {
     public:
-        using LostConnection_t = std::function<void(ConnectionManager &, const std::string_view)>;
-        using DataAvailable_t = std::function<void(ConnectionManager &)>;
+        using LostConnection_t = std::function<void(std::shared_ptr<ConnectionManager>,
+                                                    std::string_view)>;
+        using DataAvailable_t = std::function<void(std::shared_ptr<ConnectionManager>)>;
 
     private:
         LostConnection_t lostConnection_;
@@ -37,12 +38,12 @@ private:
                   dataAvailable_{ std::move(dataAvailable) } {
         }
 
-        void ifLostConnection(ConnectionManager &manager,
+        void ifLostConnection(std::shared_ptr<ConnectionManager> manager,
                               std::string_view errorMsg) override {
             lostConnection_(manager, errorMsg);
         }
 
-        void ifDataIsAvailable(ConnectionManager &manager) override {
+        void ifDataIsAvailable(std::shared_ptr<ConnectionManager> manager) override {
             dataAvailable_(manager);
         }
     };
@@ -86,16 +87,17 @@ private:
 
 //MARK: - Overrides methods of ConnectionManagerDelegate interface
 public:
-    void ifLostConnection(ConnectionManager &manager, std::string_view errorMsg) override {
+    void ifLostConnection(std::shared_ptr<ConnectionManager> manager,
+                          std::string_view errorMsg) override {
         logIfCan_(errorMsg.data(), LoggerMessageType::ERROR);
         displayer_->display(errorMsg);
 
-        manager.close();
+        manager->close();
         stop();
     }
 
-    void ifDataIsAvailable(ConnectionManager &manager) override {
-        auto message = manager.read();
+    void ifDataIsAvailable(std::shared_ptr<ConnectionManager> manager) override {
+        auto message = manager->read();
         if (!message.has_value()) return;
 
         if (MessageType::isMessageType<ConnectionMessageType>(message.value())) {
@@ -181,8 +183,8 @@ public:
 
 //MARK: - Callbacks for requestGetter_ and nameGetter_
 private:
-    void getCheckRequest_(ConnectionManager &manager) {
-        auto message = manager.read();
+    void getCheckRequest_(std::shared_ptr<ConnectionManager> manager) {
+        auto message = manager->read();
         if (!message.has_value()) return;
 
         if (ConnectionMessageHandler::isCheckApp(message.value().header)) {

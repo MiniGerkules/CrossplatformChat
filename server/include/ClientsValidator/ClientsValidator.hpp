@@ -25,28 +25,27 @@ private:
 
 //MARK: - Overrides methods of ConnectionManagerDelegate interface
 public:
-    void ifLostConnection(ConnectionManager &manager, std::string_view errorMsg) override {
-        auto managerPtr = manager.shared_from_this();
+    void ifLostConnection(std::shared_ptr<ConnectionManager> manager,
+                          std::string_view errorMsg) override {
         delegate.callIfCan(&ClientsValidatorDelegate::clientIsNotVerified,
-                           managerPtr, errorMsg);
+                           manager, errorMsg);
 
-        managerPtr->close();
-        clients_.erase(managerPtr);
+        manager->close();
+        clients_.erase(manager);
     }
 
-    void ifDataIsAvailable(ConnectionManager &manager) override {
-        auto managerPtr = manager.shared_from_this();
-        auto message = managerPtr->read();
+    void ifDataIsAvailable(std::shared_ptr<ConnectionManager> manager) override {
+        auto message = manager->read();
         if (!message.has_value()) return;
 
         auto connect = MessageType::convertToTyped<ConnectionMessageType>(message.value());
         if (!connect.has_value()) goto STRANGE_CLIENT;
 
         // If everything is fine, go out
-        if (handleConnectionMessage_(managerPtr, connect.value())) return;
+        if (handleConnectionMessage_(manager, connect.value())) return;
 
     STRANGE_CLIENT:
-        strangeClient(managerPtr);
+        strangeClient(manager);
     }
 
 public:
