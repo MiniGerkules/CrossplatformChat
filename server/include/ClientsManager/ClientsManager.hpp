@@ -16,7 +16,7 @@ class ClientsManager : public ConnectionManagerDelegate,
     using Connection_t_ = std::shared_ptr<ConnectionManager>;
 
 public:
-    Delegate<ClientsManagerDelegate> delegate{ {} };
+    Delegate<ClientsManagerDelegate> delegate;
 
 private:
     std::atomic_size_t lastID_ = 0;
@@ -64,7 +64,7 @@ public:
 //MARK: - Public methods
 public:
     void addClient(std::shared_ptr<ConnectionManager> newClient) {
-        newClient->delegate = weak_from_this();
+        newClient->delegate = Delegate<ConnectionManagerDelegate>(weak_from_this());
         clients_.insert({ newClient, { lastID_++, "" } });
     }
 

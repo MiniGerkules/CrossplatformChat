@@ -13,7 +13,7 @@ private:
     std::weak_ptr<T> delegate_;
 
 public:
-    Delegate(std::weak_ptr<T> delegate) : delegate_{ std::move(delegate) } {
+    Delegate(std::weak_ptr<T> delegate = {}) : delegate_{ std::move(delegate) } {
     }
 
     template <typename... Args>

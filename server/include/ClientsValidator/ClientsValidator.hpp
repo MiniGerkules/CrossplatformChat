@@ -15,7 +15,7 @@ class ClientsValidator final : public ConnectionManagerDelegate,
     using Check_t_ = Message<ConnectionMessageType>;
 
 public:
-    Delegate<ClientsValidatorDelegate> delegate{ {} };
+    Delegate<ClientsValidatorDelegate> delegate;
 
 private:
     TSUnorderedMap<Connection_t_, std::optional<Check_t_>> clients_;
@@ -51,7 +51,7 @@ public:
 
 public:
     void addClientToValidate(ConnectionManager newClient) {
-        newClient.delegate = weak_from_this();
+        newClient.delegate = Delegate<ConnectionManagerDelegate>(weak_from_this());
         clients_.insert({ newClient.shared_from_this(), std::nullopt });
     }
 
