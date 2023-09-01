@@ -8,6 +8,9 @@
 
 #include <Logger/ConsoleLogger.hpp>
 
+#include <Messages/Handlers/RegularMessageHandler.hpp>
+#include <Messages/Handlers/ConnectionMessageHandler.hpp>
+
 #include "Client.hpp"
 #include "Reader/ConsoleReader.hpp"
 #include "Displayer/ConsoleDisplayer.hpp"
@@ -123,6 +126,21 @@ std::unique_ptr<Connection> findServer(boost::asio::io_context &ioContext) {
     }
 }
 
+template <typename... Args> requires (sizeof...(Args) == 0)
+std::unique_ptr<MessageHandler> createHandlerChainNode() {
+    return {};
+}
+
+template <typename T, typename... Args>
+std::unique_ptr<T> createHandlerChainNode() {
+    return std::make_unique<T>(createHandlerChainNode<Args...>());
+}
+
+template <typename T, typename... Args>
+std::shared_ptr<T> createHandlerChain() {
+    return std::make_shared<T>(createHandlerChainNode<Args...>());
+}
+
 }
 
 int main() {
@@ -132,6 +150,10 @@ int main() {
     Stream stream{ ioContext, STDIN_FILENO };
     ConsoleReader reader{ ioContext, std::move(stream) };
     ConsoleDisplayer displayer;
+
+    displayer.handlersChain = createHandlerChain<RegularMessageHandler,
+                                                 BasicMessageHandler,
+                                                 ConnectionMessageHandler>();
 
     auto connection = findServer(ioContext);
     if (connection == nullptr) {
